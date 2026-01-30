@@ -7,14 +7,17 @@ class SimilarityCalculator {
     static calculateAllSimilarities(events) {
         const similarities = [];
         
-        for (let i = 0; i < events.length; i++) {
-            for (let j = i + 1; j < events.length; j++) {
-                const similarity = events[i].calculateSimilarity(events[j]);
+        // Фильтруем центральную вершину
+        const regularEvents = events.filter(event => !event.isCenter);
+        
+        for (let i = 0; i < regularEvents.length; i++) {
+            for (let j = i + 1; j < regularEvents.length; j++) {
+                const similarity = regularEvents[i].calculateSimilarity(regularEvents[j]);
                 similarities.push({
-                    event1: events[i],
-                    event2: events[j],
+                    event1: regularEvents[i],
+                    event2: regularEvents[j],
                     similarity: similarity,
-                    type: this.getConnectionType(events[i], events[j])
+                    type: this.getConnectionType(regularEvents[i], regularEvents[j])
                 });
             }
         }
@@ -26,7 +29,9 @@ class SimilarityCalculator {
      * Получает рекомендации для конкретного мероприятия
      */
     static getRecommendations(targetEvent, allEvents, limit = null) {
-        const otherEvents = allEvents.filter(event => event.id !== targetEvent.id);
+        const otherEvents = allEvents.filter(event => 
+            event.id !== targetEvent.id && !event.isCenter
+        );
         
         const recommendations = otherEvents.map(event => {
             const similarity = targetEvent.calculateSimilarity(event);
@@ -51,48 +56,91 @@ class SimilarityCalculator {
      * Определяет тип связи между мероприятиями
      */
     static getConnectionType(event1, event2) {
-        // Используем глобальную функцию hasCommon из utils.js
-        if (window.hasCommon && window.hasCommon(event1.tags, event2.tags)) {
+        if (hasCommon(event1.tags, event2.tags)) {
             return 'tag';
-        } else if (window.hasCommon && window.hasCommon(event1.errors, event2.errors)) {
+        } else if (hasCommon(event1.errors, event2.errors)) {
             return 'error';
         }
         return null;
     }
 
     /**
-     * Группирует мероприятия по схожести
+     * Рассчитывает схожесть с центральной вершиной
      */
-    static groupBySimilarity(events, threshold = 1.0) {
-        const groups = [];
-        const visited = new Set();
-        
-        events.forEach((event, index) => {
-            if (visited.has(event.id)) return;
-            
-            const group = [event];
-            visited.add(event.id);
-            
-            // Ищем похожие мероприятия
-            events.forEach((otherEvent, otherIndex) => {
-                if (index === otherIndex || visited.has(otherEvent.id)) return;
-                
-                const similarity = event.calculateSimilarity(otherEvent);
-                if (similarity >= threshold) {
-                    group.push(otherEvent);
-                    visited.add(otherEvent.id);
-                }
-            });
-            
-            if (group.length > 0) {
-                groups.push({
-                    events: group,
-                    avgSimilarity: this.calculateGroupSimilarity(group)
-                });
+    static calculateSimilarityToCenter(event) {
+        // Виртуальная центральная вершина с идеальными параметрами
+        const centerVirtualEvent = {
+            tags: ['#развитие', '#направление', '#потенциал'],
+            budget: 0,
+            date: new Date().toISOString().split('T')[0],
+            participants: 1,
+            calculateTagSimilarity: function(other) {
+                const commonTags = this.tags.filter(tag => other.tags.includes(tag)).length;
+                const totalTags = new Set([...this.tags, ...other.tags]).size;
+                return totalTags === 0 ? 1 : (commonTags / totalTags) * 2;
+            },
+            calculateBudgetSimilarity: function(other) {
+                return calculateSimilarityValue(this.budget, other.budget);
+            },
+            calculateDateSimilarity: function(other) {
+                return calculateDateSimilarity(this.date, other.date);
+            },
+            calculateParticipantsSimilarity: function(other) {
+                return calculateSimilarityValue(this.participants, other.participants);
             }
-        });
+        };
         
-        return groups.sort((a, b) => b.avgSimilarity - a.avgSimilarity);
+        return event.calculateSimilarity(centerVirtualEvent);
+    }
+
+    /**
+     * Получает рекомендации для развития от центральной вершины
+     */
+    static getDevelopmentRecommendations(allEvents, limit = 5) {
+        const regularEvents = allEvents.filter(event => !event.isCenter);
+        
+        const recommendations = regularEvents.map(event => {
+            const similarity = this.calculateSimilarityToCenter(event);
+            const developmentPotential = Math.min(100, similarity * 100);
+            
+            return {
+                event: event,
+                similarity: similarity,
+                developmentPotential: developmentPotential,
+                direction: this.getDevelopmentDirection(event)
+            };
+        })
+        .sort((a, b) => b.developmentPotential - a.developmentPotential)
+        .slice(0, limit);
+        
+        return recommendations;
+    }
+
+    /**
+     * Определяет направление развития на основе тегов
+     */
+    static getDevelopmentDirection(event) {
+        const tagDirections = {
+            '#хакатон': 'Технические навыки',
+            '#митап': 'Сетевое взаимодействие',
+            '#конференция': 'Профессиональный рост',
+            '#воркшоп': 'Практические навыки',
+            '#лекция': 'Теоретические знания',
+            '#марафон': 'Выносливость и упорство',
+            '#соревнование': 'Конкурентные навыки',
+            '#выставка': 'Творческий подход',
+            '#тренинг': 'Личностный рост',
+            '#хаттон': 'Решение задач',
+            '#ивент': 'Организация событий'
+        };
+        
+        for (const tag of event.tags) {
+            if (tagDirections[tag.toLowerCase()]) {
+                return tagDirections[tag.toLowerCase()];
+            }
+        }
+        
+        return 'Общее развитие';
     }
 
     /**
@@ -112,51 +160,5 @@ class SimilarityCalculator {
         }
         
         return totalSimilarity / pairCount;
-    }
-
-    /**
-     * Рассчитывает топ N самых похожих мероприятий
-     */
-    static getTopSimilarEvents(events, topN = 3) {
-        if (events.length < 2) return [];
-        
-        const allSimilarities = this.calculateAllSimilarities(events);
-        
-        // Собираем схожесть для каждого события
-        const eventSimilarities = new Map();
-        
-        allSimilarities.forEach(sim => {
-            // Для event1
-            if (!eventSimilarities.has(sim.event1.id)) {
-                eventSimilarities.set(sim.event1.id, {
-                    event: sim.event1,
-                    similarities: []
-                });
-            }
-            eventSimilarities.get(sim.event1.id).similarities.push(sim.similarity);
-            
-            // Для event2
-            if (!eventSimilarities.has(sim.event2.id)) {
-                eventSimilarities.set(sim.event2.id, {
-                    event: sim.event2,
-                    similarities: []
-                });
-            }
-            eventSimilarities.get(sim.event2.id).similarities.push(sim.similarity);
-        });
-        
-        // Рассчитываем среднюю схожесть для каждого
-        const results = Array.from(eventSimilarities.values()).map(item => {
-            const avgSimilarity = item.similarities.reduce((a, b) => a + b, 0) / item.similarities.length;
-            return {
-                event: item.event,
-                avgSimilarity: avgSimilarity
-            };
-        });
-        
-        // Сортируем и возвращаем топ N
-        return results
-            .sort((a, b) => b.avgSimilarity - a.avgSimilarity)
-            .slice(0, topN);
     }
 }

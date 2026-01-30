@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('❌ Ошибка при загрузке приложения:', error);
             alert('Произошла ошибка при загрузке приложения. Пожалуйста, проверьте консоль для подробностей.');
         }
-    }, 100); // 100ms задержка
+    }, 100);
     
     // # ---- Функции ---- #
     
@@ -65,15 +65,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return null;
             }
             
-            // Позиционируем по сетке
-            const snapped = canvas.snapToGrid(event.x, event.y);
-            event.x = snapped.x;
-            event.y = snapped.y;
-            
-            if (event.element) {
-                event.element.style.left = snapped.x + 'px';
-                event.element.style.top = snapped.y + 'px';
-                event.element.style.position = 'absolute';
+            // Для нецентральных вершин - позиционируем по кругу
+            if (!eventData.isCenter) {
+                const position = canvas.getPositionOnCircle();
+                event.x = position.x;
+                event.y = position.y;
+                
+                if (event.element) {
+                    event.element.style.left = event.x + 'px';
+                    event.element.style.top = event.y + 'px';
+                    event.element.style.position = 'absolute';
+                }
             }
             
             // Добавляем вершину на канвас
@@ -83,6 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             return event;
         };
+        
+        // Делаем canvas доступным глобально
+        window.infiniteCanvas = canvas;
     }
     
     function setupEventListeners() {
@@ -98,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Рекомендации
         document.getElementById('show-recommendations')?.addEventListener('click', showRecommendations);
+        document.getElementById('show-development')?.addEventListener('click', showDevelopmentRecommendations);
         document.getElementById('close-recommendations')?.addEventListener('click', hideRecommendations);
         
         // Фильтры
@@ -119,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function showAddEventForm() {
         document.getElementById('card-overlay').style.display = 'flex';
-        // Устанавливаем сегодняшнюю дату по умолчанию
         document.getElementById('vertex-date').value = new Date().toISOString().split('T')[0];
     }
     
@@ -185,18 +190,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('info-date').textContent = infoData.date;
         document.getElementById('info-participants').textContent = infoData.participants;
         
-        // Рассчитываем среднюю схожесть с другими мероприятиями
-        const allEvents = graphManager.getAllEvents();
-        const otherEvents = allEvents.filter(e => e.id !== event.id);
-        
-        if (otherEvents.length > 0) {
-            const similarities = otherEvents.map(e => event.calculateSimilarity(e));
-            const avgSimilarity = similarities.reduce((a, b) => a + b, 0) / similarities.length;
-            const similarityClass = getSimilarityClass(avgSimilarity);
+        // Рассчитываем схожесть с центром
+        if (!event.isCenter) {
+            const similarity = SimilarityCalculator.calculateSimilarityToCenter(event);
+            const similarityClass = getSimilarityClass(similarity);
             
             const similarityElement = document.getElementById('info-similarity');
-            similarityElement.textContent = `${similarityClass.label} (${avgSimilarity.toFixed(2)})`;
+            similarityElement.textContent = `${similarityClass.label} (${similarity.toFixed(2)})`;
             similarityElement.className = `similarity-indicator ${similarityClass.className}`;
+        } else {
+            document.getElementById('info-similarity').textContent = 'Центральная точка';
         }
         
         const infoSidebar = document.getElementById('info-sidebar');
@@ -247,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (graphManager.updateEvent(vertexId, updateData)) {
             saveToLocalStorage();
             hideEditEventForm();
-            // Обновляем информацию в сайдбаре
             const event = graphManager.getEventById(vertexId);
             updateEventInfo(event);
         }
@@ -284,17 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minParticipants: participantsFilter ? parseInt(participantsFilter) : null
         };
         
-        graphManager.clearConnections();
-        
-        // Применяем фильтр к вершинам
-        graphManager.events.forEach(event => {
-            const matches = event.matchesFilter(filter);
-            if (event.element) {
-                event.element.style.display = matches ? 'block' : 'none';
-            }
-        });
-        
-        graphManager.renderAllConnections();
+        graphManager.filterEvents(filter);
     }
     
     function showRecommendations() {
@@ -308,11 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let recommendations;
         
-        if (selectedEvent) {
-            // Рекомендации для выбранного мероприятия
+        if (selectedEvent && !selectedEvent.isCenter) {
             recommendations = SimilarityCalculator.getRecommendations(selectedEvent, allEvents);
         } else {
-            // Общие рекомендации (все пары)
             const similarities = SimilarityCalculator.calculateAllSimilarities(allEvents);
             recommendations = similarities.slice(0, 5).map(sim => ({
                 event: sim.event2,
@@ -327,6 +317,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         renderRecommendations(recommendations, selectedEvent);
+        document.getElementById('recommendations-sidebar').classList.add('open');
+    }
+    
+    function showDevelopmentRecommendations() {
+        const allEvents = graphManager.getAllEvents();
+        const developmentRecs = SimilarityCalculator.getDevelopmentRecommendations(allEvents);
+        
+        const recommendationsList = document.getElementById('recommendations-list');
+        recommendationsList.innerHTML = '<h4>🏆 Мои направления развития</h4>';
+        
+        if (developmentRecs.length === 0) {
+            recommendationsList.innerHTML += '<p>Добавьте мероприятия для анализа развития</p>';
+            return;
+        }
+        
+        developmentRecs.forEach((rec, index) => {
+            const card = document.createElement('div');
+            card.className = 'recommendation-card';
+            card.innerHTML = `
+                <div class="recommendation-title">${index + 1}. ${rec.event.title}</div>
+                <div class="recommendation-similarity high">
+                    Потенциал развития: ${rec.developmentPotential.toFixed(1)}%
+                </div>
+                <div class="recommendation-meta">
+                    <div>📈 Направление: ${rec.direction}</div>
+                    <div>💰 Бюджет: ${formatNumber(rec.event.budget)} KZT</div>
+                    <div>👥 Участники: ${formatNumber(rec.event.participants)} чел.</div>
+                </div>
+                <div class="recommendation-tags">
+                    ${rec.event.tags.map(tag => `<span class="recommendation-tag">${tag}</span>`).join('')}
+                </div>
+                <button class="btn in-box select-btn">Выбрать для деталей</button>
+            `;
+            
+            card.querySelector('.select-btn').addEventListener('click', () => {
+                graphManager.selectEvent(rec.event);
+                highlightVertex(rec.event.id, 'recommendation');
+                hideRecommendations();
+            });
+            
+            recommendationsList.appendChild(card);
+        });
+        
         document.getElementById('recommendations-sidebar').classList.add('open');
     }
     
@@ -353,27 +386,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = `recommendation-card ${simClass.className}`;
         
-        // Детали схожести по каждому параметру
-        const detailsHTML = `
-            <div class="similarity-details">
-                <small>🏷️ Теги: ${(recommendation.details.tagSimilarity).toFixed(2)}</small><br>
-                <small>💰 Бюджет: ${(recommendation.details.budgetSimilarity).toFixed(2)}</small><br>
-                <small>📅 Дата: ${(recommendation.details.dateSimilarity).toFixed(2)}</small><br>
-                <small>👥 Участники: ${(recommendation.details.participantsSimilarity).toFixed(2)}</small>
-            </div>
-        `;
-        
         card.innerHTML = `
             <div class="recommendation-title">${rank}. ${event.title}</div>
             <div class="recommendation-similarity ${simClass.className}">
-                Общая схожесть: ${similarity.toFixed(2)}
+                Схожесть: ${similarity.toFixed(2)}
             </div>
             <div class="recommendation-meta">
                 <div>💰 Бюджет: ${formatNumber(event.budget)} KZT</div>
                 <div>📅 Дата: ${formatDate(event.date)}</div>
                 <div>👥 Участники: ${formatNumber(event.participants)} чел.</div>
             </div>
-            ${detailsHTML}
             <div class="recommendation-tags">
                 ${event.tags.map(tag => `<span class="recommendation-tag">${tag}</span>`).join('')}
             </div>
@@ -388,26 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         return card;
     }
-
-    /**
-     * Подсвечивает вершину на 3-4 секунды
-     * @param {string} eventId - ID мероприятия
-     * @param {string} type - Тип подсветки (рекомендация, тег, ошибка и т.д.)
-     */
+    
     function highlightVertex(eventId, type = 'recommendation') {
         const event = graphManager.getEventById(eventId);
         if (!event || !event.element) return;
         
         const vertex = event.element;
         
-        // Удаляем предыдущую подсветку если есть
         vertex.classList.remove('highlighted', 'tag', 'error', 'recommendation');
-        
-        // Добавляем классы подсветки
         vertex.classList.add('highlighted', type);
         vertex.style.zIndex = '100';
         
-        // Убираем подсветку через 3.5 секунды
         setTimeout(() => {
             vertex.classList.remove('highlighted', type);
             vertex.style.zIndex = '1';
@@ -464,7 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Получаем текущих пользователей из localStorage
         const usersJSON = localStorage.getItem('users');
         const users = usersJSON ? JSON.parse(usersJSON) : {};
         
@@ -473,18 +485,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Добавляем нового пользователя
         users[username] = { 
             password: password,
             events: []
         };
         
-        // Сохраняем обратно
         localStorage.setItem('users', JSON.stringify(users));
-        
         alert('Регистрация успешна!');
-        
-        // Переключаемся на Login
         toggleAuthForms();
     }
     
@@ -507,10 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentUser = username;
         alert('Вход выполнен успешно!');
-        
-        // Загружаем мероприятия пользователя
         loadUserEvents(username);
-        
         hideAuthForm();
     }
     
@@ -521,18 +525,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const users = usersJSON ? JSON.parse(usersJSON) : {};
         
         if (users[currentUser]) {
-            const eventsData = graphManager.getAllEvents().map(event => ({
-                id: event.id,
-                title: event.title,
-                tags: event.tags,
-                errors: event.errors,
-                contacts: event.contacts,
-                budget: event.budget,
-                date: event.date,
-                participants: event.participants,
-                x: event.x,
-                y: event.y
-            }));
+            const eventsData = graphManager.getAllEvents()
+                .filter(event => !event.isCenter) // Не сохраняем центральную вершину
+                .map(event => ({
+                    id: event.id,
+                    title: event.title,
+                    tags: event.tags,
+                    errors: event.errors,
+                    contacts: event.contacts,
+                    budget: event.budget,
+                    date: event.date,
+                    participants: event.participants,
+                    x: event.x,
+                    y: event.y
+                }));
             
             users[currentUser].events = eventsData;
             localStorage.setItem('users', JSON.stringify(users));
@@ -540,18 +546,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function loadFromLocalStorage() {
-        // Проверяем, есть ли сохраненные данные
-        const savedEvents = localStorage.getItem('events');
-        if (savedEvents) {
-            try {
-                const eventsData = JSON.parse(savedEvents);
-                eventsData.forEach(eventData => {
-                    graphManager.addEvent(eventData);
-                });
-                console.log('События загружены из localStorage');
-            } catch (e) {
-                console.error('Ошибка при загрузке событий:', e);
-            }
+        // Загружаем тестовые данные если нет пользователя
+        if (!currentUser) {
+            loadSampleEvents();
         }
     }
     
@@ -560,16 +557,58 @@ document.addEventListener('DOMContentLoaded', () => {
         const users = usersJSON ? JSON.parse(usersJSON) : {};
         
         if (users[username] && users[username].events) {
-            // Очищаем текущие мероприятия
-            graphManager.getAllEvents().forEach(event => {
-                if (event.element) event.element.remove();
-            });
-            graphManager.events = [];
+            // Очищаем текущие мероприятия (кроме центральной)
+            graphManager.getAllEvents()
+                .filter(event => !event.isCenter)
+                .forEach(event => {
+                    if (event.element) event.element.remove();
+                });
+            
+            graphManager.events = graphManager.events.filter(event => event.isCenter);
             
             // Загружаем мероприятия пользователя
             users[username].events.forEach(eventData => {
                 graphManager.addEvent(eventData);
             });
         }
+    }
+    
+    function loadSampleEvents() {
+        // Добавляем несколько примеров для демонстрации
+        const sampleEvents = [
+            {
+                title: 'Хакатон по AI',
+                tags: '#хакатон,#искуственный_интеллект,#python',
+                errors: '#плохая_документация',
+                contacts: 'org@hackathon.ai',
+                budget: '50000',
+                date: '2024-03-15',
+                participants: '50'
+            },
+            {
+                title: 'Конференция DevDays',
+                tags: '#конференция,#разработка,#сеть',
+                errors: '#долгий_регистрация',
+                contacts: 'info@devdays.kz',
+                budget: '100000',
+                date: '2024-04-20',
+                participants: '200'
+            },
+            {
+                title: 'Воркшоп по React',
+                tags: '#воркшоп,#react,#frontend',
+                errors: '#мало_практики',
+                contacts: 'workshop@react.kz',
+                budget: '25000',
+                date: '2024-02-10',
+                participants: '30'
+            }
+        ];
+        
+        sampleEvents.forEach(eventData => {
+            setTimeout(() => {
+                graphManager.addEvent(eventData);
+            }, 100);
+        });
     }
 });

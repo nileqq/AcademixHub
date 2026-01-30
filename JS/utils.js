@@ -32,10 +32,10 @@ function hasCommon(a, b) {
  * Рассчитывает схожесть двух числовых значений по формуле
  */
 function calculateSimilarityValue(a, b) {
-    if (a === 0 && b === 0) return 2; // оба нуля - максимальная схожесть
+    if (a === 0 && b === 0) return 2;
     
     const sum = a + b;
-    if (sum === 0) return 0; // избегаем деления на ноль
+    if (sum === 0) return 0;
     
     return 2 - (2 * Math.abs(a - b)) / sum;
 }
@@ -44,16 +44,14 @@ function calculateSimilarityValue(a, b) {
  * Рассчитывает схожесть двух дат (в днях)
  */
 function calculateDateSimilarity(dateStr1, dateStr2) {
-    if (!dateStr1 || !dateStr2) return 1; // нейтральное значение если даты нет
+    if (!dateStr1 || !dateStr2) return 1;
     
     const date1 = new Date(dateStr1);
     const date2 = new Date(dateStr2);
     
-    // Разница в днях
     const diffTime = Math.abs(date2 - date1);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    // Нормализуем разницу (30 дней = схожесть 0)
     const maxDiff = 30;
     const normalizedDiff = Math.min(diffDays / maxDiff, 1);
     
@@ -83,13 +81,11 @@ function formatDate(dateStr) {
 }
 
 /**
- * Форматирует число с разделителями и добавляет валюту
+ * Форматирует число с разделителями
  */
-function formatNumber(num, currency = 'KZT') {
+function formatNumber(num) {
     if (!num && num !== 0) return '0';
-    
-    const formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return currency ? `${formatted}` : formatted;
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
 /**
@@ -99,7 +95,7 @@ function isEmpty(str) {
     return !str || !str.trim();
 }
 
-// Делаем функции доступными глобально для всех скриптов
+// Делаем функции доступными глобально
 window.parseTags = parseTags;
 window.normalizeTag = normalizeTag;
 window.hasCommon = hasCommon;

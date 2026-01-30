@@ -8,6 +8,12 @@ class GraphManager {
         this.vertexHeight = 80;
         this.selectedEvent = null;
         this.connections = [];
+        
+        if (!this.container) {
+            console.error('Контейнер графа не найден:', containerId);
+            return;
+        }
+        
         this.initContainer();
     }
 
@@ -15,13 +21,22 @@ class GraphManager {
      * Инициализирует контейнер графа
      */
     initContainer() {
-        if (!this.container) {
-            console.error('Контейнер графа не найден');
-            return;
-        }
-        
-        // Обработчики для drag & drop
-        this.setupDragAndDrop();
+        // Обработчики для контейнера
+        this.setupContainerListeners();
+    }
+
+    /**
+     * Настройка обработчиков для контейнера
+     */
+    setupContainerListeners() {
+        // Клик по пустому месту сбрасывает выбор
+        this.container.addEventListener('click', (e) => {
+            if (e.target === this.container) {
+                this.selectedEvent = null;
+                const deselectEvent = new CustomEvent('eventDeselected');
+                document.dispatchEvent(deselectEvent);
+            }
+        });
     }
 
     /**
@@ -29,13 +44,6 @@ class GraphManager {
      */
     addEvent(eventData) {
         const event = new Event(eventData);
-        
-        // Генерируем случайные координаты если не указаны
-        if (!event.x || !event.y) {
-            const rect = this.container.getBoundingClientRect();
-            event.x = Math.random() * (rect.width - this.vertexWidth);
-            event.y = Math.random() * (rect.height - this.vertexHeight);
-        }
         
         this.events.push(event);
         this.renderEvent(event);
@@ -85,23 +93,24 @@ class GraphManager {
     renderEvent(event) {
         const element = event.createElement();
         
-        // Обработчик клика для выбора
-        element.addEventListener('click', (e) => {
-            // ПРОВЕРЯЕМ, НЕ ПОДСВЕЧЕНА ЛИ ВЕРШИНА
-            if (element.classList.contains('highlighted')) {
+        // Для центральной вершины - особый обработчик
+        if (event.isCenter) {
+            element.style.cursor = 'default';
+        } else {
+            // Обработчик клика для выбора
+            element.addEventListener('click', (e) => {
                 e.stopPropagation();
-                return;
-            }
+                this.selectEvent(event);
+            });
             
-            e.stopPropagation();
-            this.selectEvent(event);
-        });
+            // Настраиваем перетаскивание
+            this.setupEventDragging(event, element);
+        }
         
         // Добавляем в контейнер
         this.container.appendChild(element);
         
-        // Настраиваем перетаскивание
-        this.setupEventDragging(event, element);
+        return element;
     }
 
     /**
@@ -110,9 +119,18 @@ class GraphManager {
     setupEventDragging(event, element) {
         let isDragging = false;
         let offsetX, offsetY;
+        let startX, startY;
         
         element.addEventListener('mousedown', (e) => {
+            // Если вершина подсвечена - блокируем перетаскивание
+            if (element.classList.contains('highlighted')) {
+                e.stopPropagation();
+                return;
+            }
+            
             isDragging = true;
+            startX = event.x;
+            startY = event.y;
             offsetX = e.offsetX;
             offsetY = e.offsetY;
             element.style.zIndex = '10';
@@ -122,13 +140,13 @@ class GraphManager {
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             
-            const containerRect = this.container.getBoundingClientRect();
-            const x = e.clientX - containerRect.left - offsetX;
-            const y = e.clientY - containerRect.top - offsetY;
+            const rect = this.container.getBoundingClientRect();
+            const x = e.clientX - rect.left - offsetX;
+            const y = e.clientY - rect.top - offsetY;
             
             event.moveTo(x, y, {
-                width: containerRect.width,
-                height: containerRect.height
+                width: rect.width,
+                height: rect.height
             });
             
             this.renderAllConnections();
@@ -136,25 +154,40 @@ class GraphManager {
         
         document.addEventListener('mouseup', () => {
             isDragging = false;
-            element.style.zIndex = '1';
+            element.style.zIndex = '2';
+            
+            // Если позиция изменилась - можно сохранить
+            if (event.x !== startX || event.y !== startY) {
+                // Здесь можно вызвать сохранение
+            }
         });
     }
 
     /**
-     * Отображает все связи между ВИДИМЫМИ мероприятиями
+     * Отображает все связи
      */
     renderAllConnections() {
         this.clearConnections();
         
-        // Получаем только видимые мероприятия
-        const visibleEvents = this.events.filter(event => 
-            event.element && event.element.style.display !== 'none'
-        );
+        // Получаем центральную вершину если есть
+        const centerVertex = this.events.find(event => event.isCenter);
         
-        // Рисуем связи только между видимыми мероприятиями
-        for (let i = 0; i < visibleEvents.length; i++) {
-            for (let j = i + 1; j < visibleEvents.length; j++) {
-                this.drawConnection(visibleEvents[i], visibleEvents[j]);
+        // Рисуем связи между обычными вершинами
+        for (let i = 0; i < this.events.length; i++) {
+            const event1 = this.events[i];
+            if (event1.isCenter) continue;
+            
+            // Связи с другими обычными вершинами
+            for (let j = i + 1; j < this.events.length; j++) {
+                const event2 = this.events[j];
+                if (event2.isCenter) continue;
+                
+                this.drawConnection(event1, event2);
+            }
+            
+            // Связи с центральной вершиной
+            if (centerVertex) {
+                this.drawConnection(event1, centerVertex, 'center-connection');
             }
         }
     }
@@ -162,17 +195,16 @@ class GraphManager {
     /**
      * Рисует связь между двумя мероприятиями
      */
-    drawConnection(event1, event2) {
-        // ПРОВЕРЯЕМ, ВИДИМЫ ЛИ ОБЕ ВЕРШИНЫ
+    drawConnection(event1, event2, type = null) {
         if (!event1.element || !event2.element) return;
-        if (event1.element.style.display === 'none' || event2.element.style.display === 'none') {
-            return;
+        
+        // Определяем тип связи если не указан
+        if (!type) {
+            type = this.getConnectionType(event1, event2);
+            if (!type) return;
         }
         
-        const connectionType = this.getConnectionType(event1, event2);
-        if (!connectionType) return;
-        
-        const line = this.createConnectionLine(event1, event2, connectionType);
+        const line = this.createConnectionLine(event1, event2, type);
         this.container.appendChild(line);
         this.connections.push(line);
     }
@@ -213,8 +245,12 @@ class GraphManager {
         line.style.top = y1 + 'px';
         line.style.transform = `rotate(${angle}deg)`;
         
-        // Добавляем подсказку со схожестью
-        line.title = `Схожесть: ${event1.calculateSimilarity(event2).toFixed(2)}`;
+        // Добавляем подсказку
+        if (type === 'center-connection') {
+            line.title = `Связь с центром`;
+        } else {
+            line.title = `Схожесть: ${event1.calculateSimilarity(event2).toFixed(2)}`;
+        }
         
         return line;
     }
@@ -258,35 +294,7 @@ class GraphManager {
             }
         });
         
-        // Перерисовываем связи с учетом фильтра
-        this.renderFilteredConnections(filter);
-    }
-
-    /**
-     * Отображает только связи между видимыми мероприятиями
-     */
-    renderFilteredConnections(filter) {
-        this.clearConnections();
-        
-        // Получаем только видимые мероприятия
-        const visibleEvents = this.events.filter(event => {
-            if (!event.element) return false;
-            return event.element.style.display !== 'none';
-        });
-        
-        // Рисуем связи только между видимыми мероприятиями
-        for (let i = 0; i < visibleEvents.length; i++) {
-            for (let j = i + 1; j < visibleEvents.length; j++) {
-                const event1 = visibleEvents[i];
-                const event2 = visibleEvents[j];
-                
-                // Проверяем, должны ли быть связаны эти мероприятия
-                const connectionType = this.getConnectionType(event1, event2);
-                if (connectionType) {
-                    this.drawConnection(event1, event2);
-                }
-            }
-        }
+        this.renderAllConnections();
     }
 
     /**
@@ -304,16 +312,9 @@ class GraphManager {
     }
 
     /**
-     * Настройка обработчиков для контейнера
+     * Получает центральную вершину
      */
-    setupDragAndDrop() {
-        // Клик по пустому месту сбрасывает выбор
-        this.container.addEventListener('click', (e) => {
-            if (e.target === this.container) {
-                this.selectedEvent = null;
-                const deselectEvent = new CustomEvent('eventDeselected');
-                document.dispatchEvent(deselectEvent);
-            }
-        });
+    getCenterVertex() {
+        return this.events.find(event => event.isCenter);
     }
 }

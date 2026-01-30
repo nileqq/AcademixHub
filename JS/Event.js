@@ -8,15 +8,20 @@ class Event {
         this.errors = Array.isArray(data.errors) ? data.errors : parseTags(data.errors || '');
         this.contacts = data.contacts || '';
         
-        // # ---- Новые метаданные ---- #
+        // Метаданные
         this.budget = parseInt(data.budget) || 0;
         this.date = data.date || '';
         this.participants = parseInt(data.participants) || 1;
         
+        // Позиция
         this.x = data.x || 0;
         this.y = data.y || 0;
+        
+        // DOM элемент
         this.element = null;
-        this.connections = [];
+        
+        // Флаги
+        this.isCenter = data.isCenter || false;
     }
 
     /**
@@ -43,7 +48,12 @@ class Event {
     /**
      * Рассчитывает схожесть с другим мероприятием
      */
-    calculateSimilarity(otherEvent) {
+    calculateSimilarity(otherEvent, weights = {
+        tags: 0.4,
+        budget: 0.25,
+        date: 0.2,
+        participants: 0.15
+    }) {
         // Схожесть по тегам
         const tagSimilarity = this.calculateTagSimilarity(otherEvent);
         
@@ -56,7 +66,7 @@ class Event {
         // Схожесть по количеству участников
         const participantsSimilarity = this.calculateParticipantsSimilarity(otherEvent);
         
-        // Используем среднеквадратичное среднее для лучшего баланса
+        // Используем среднеквадратичное среднее
         const similarities = [tagSimilarity, budgetSimilarity, dateSimilarity, participantsSimilarity];
         const sumOfSquares = similarities.reduce((sum, val) => sum + val * val, 0);
         
@@ -64,18 +74,16 @@ class Event {
     }
 
     /**
-     * Схожесть по тегам (на основе общих тегов)
+     * Схожесть по тегам
      */
     calculateTagSimilarity(otherEvent) {
         const commonTags = this.tags.filter(tag => otherEvent.tags.includes(tag)).length;
         const totalTags = new Set([...this.tags, ...otherEvent.tags]).size;
         
-        if (totalTags === 0) return 1; // нейтральное значение если нет тегов
+        if (totalTags === 0) return 1;
         
         return (commonTags / totalTags) * 2;
     }
-
-// В Event.js замените методы:
 
     /**
      * Схожесть по бюджету
@@ -107,7 +115,7 @@ class Event {
             tags: this.tags.join(', '),
             errors: this.errors.join(', '),
             contacts: this.contacts,
-            budget: `${formatNumber(this.budget)} KZT`, // Изменено на KZT
+            budget: `${formatNumber(this.budget)} KZT`,
             date: formatDate(this.date),
             participants: `${formatNumber(this.participants)} чел.`
         };
@@ -155,10 +163,16 @@ class Event {
     createElement() {
         const div = document.createElement('div');
         div.classList.add('vertex');
+        
+        if (this.isCenter) {
+            div.classList.add('center-vertex');
+        }
+        
         div.style.left = this.x + 'px';
         div.style.top = this.y + 'px';
         div.textContent = this.title;
         div.dataset.eventId = this.id;
+        div.title = this.title;
         
         this.element = div;
         return div;

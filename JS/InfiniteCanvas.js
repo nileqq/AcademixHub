@@ -4,55 +4,34 @@ class InfiniteCanvas {
     constructor(containerId) {
         console.log('🟡 Создание InfiniteCanvas с ID:', containerId);
         
-        // Ищем контейнер разными способами
+        // Ищем контейнер
         this.container = document.getElementById(containerId);
         
         if (!this.container) {
-            console.log('🟡 Не нашли по ID, ищем по классу .infinite-canvas-container');
+            console.log('🟡 Не нашли по ID, ищем .infinite-canvas-container');
             this.container = document.querySelector('.infinite-canvas-container');
         }
         
         if (!this.container) {
-            console.log('🟡 Не нашли по классу, ищем любую подходящую структуру');
-            this.container = document.querySelector('main .infinite-canvas-container, main [id*="canvas"]');
-        }
-        
-        console.log('🟡 Найден контейнер:', this.container);
-        
-        if (!this.container) {
             console.error('❌ InfiniteCanvas: Контейнер не найден!');
-            console.error('❌ Искали ID:', containerId);
-            console.error('❌ Доступные элементы в DOM:');
-            console.error(document.querySelectorAll('main > div'));
             return;
         }
         
         // Определяем canvas элемент
-        // Если контейнер сам имеет класс .infinite-canvas, то он и есть canvas
         if (this.container.classList.contains('infinite-canvas')) {
             this.canvas = this.container;
-            console.log('✅ Контейнер и canvas - один элемент (имеет класс .infinite-canvas)');
         } else {
-            // Ищем .infinite-canvas внутри контейнера
             this.canvas = this.container.querySelector('.infinite-canvas');
-            console.log('✅ Canvas найден внутри контейнера:', this.canvas);
         }
         
-        // Если canvas не найден, но контейнер есть - создаем canvas
-        if (this.container && !this.canvas) {
-            console.log('🟡 Canvas не найден, создаем...');
+        // Если canvas не найден, создаем его
+        if (!this.canvas) {
             this.canvas = document.createElement('div');
             this.canvas.className = 'infinite-canvas';
             this.container.appendChild(this.canvas);
-            console.log('✅ Canvas создан автоматически');
         }
         
-        if (!this.canvas) {
-            console.error('❌ InfiniteCanvas: Canvas элемент не создан!');
-            return;
-        }
-        
-        console.log('✅ InfiniteCanvas создан успешно');
+        console.log('✅ InfiniteCanvas создан');
         console.log('✅ Container:', this.container);
         console.log('✅ Canvas:', this.canvas);
         
@@ -71,8 +50,6 @@ class InfiniteCanvas {
         this.dragStart = { x: 0, y: 0 };
         this.dragStartPosition = { x: 0, y: 0 };
         
-
-        this.centerVertex = null;
         this.init();
     }
     
@@ -82,41 +59,24 @@ class InfiniteCanvas {
     init() {
         console.log('🟡 InfiniteCanvas init() запущен');
         
-        if (!this.container) {
-            console.error('❌ InfiniteCanvas init: Контейнер не найден');
+        if (!this.container || !this.canvas) {
+            console.error('❌ InfiniteCanvas не инициализирован');
             return;
         }
-        
-        if (!this.canvas) {
-            console.error('❌ InfiniteCanvas init: Canvas не найден');
-            return;
-        }
-        
-        console.log('✅ Container размеры:', this.container.offsetWidth, 'x', this.container.offsetHeight);
-        console.log('✅ Canvas размеры:', this.canvas.offsetWidth, 'x', this.canvas.offsetHeight);
         
         this.setupEventListeners();
         this.createGrid();
+        this.createCenterVertex();
         this.updateView();
         this.setupNavigation();
-        this.createCenterVertex();
         
         console.log('✅ InfiniteCanvas полностью инициализирован');
-
-
     }
     
     /**
      * Настройка обработчиков событий
      */
     setupEventListeners() {
-        console.log('🟡 Настройка обработчиков событий...');
-        
-        if (!this.container) {
-            console.error('❌ Не могу настроить обработчики: нет контейнера');
-            return;
-        }
-        
         // Перетаскивание канваса
         this.container.addEventListener('mousedown', this.handleMouseDown.bind(this));
         document.addEventListener('mousemove', this.handleMouseMove.bind(this));
@@ -125,28 +85,14 @@ class InfiniteCanvas {
         // Зум колесиком мыши
         this.container.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
         
-        // Touch события для мобильных
-        this.container.addEventListener('touchstart', this.handleTouchStart.bind(this));
-        this.container.addEventListener('touchmove', this.handleTouchMove.bind(this));
-        this.container.addEventListener('touchend', this.handleTouchEnd.bind(this));
-        
-        // Обновление индикатора при движении
+        // Обновление индикатора
         this.container.addEventListener('mousemove', this.updatePositionIndicator.bind(this));
-        
-        console.log('✅ Обработчики событий настроены');
     }
     
     /**
      * Создание сетки
      */
     createGrid() {
-        console.log('🟡 Создание сетки...');
-        
-        if (!this.canvas) {
-            console.error('❌ Не могу создать сетку: нет canvas');
-            return;
-        }
-        
         // Очищаем старую сетку
         document.querySelectorAll('.grid-line').forEach(line => line.remove());
         
@@ -169,22 +115,53 @@ class InfiniteCanvas {
             line.style.opacity = '0.5';
             this.canvas.appendChild(line);
         }
+    }
+    
+    /**
+     * Создает центральную вершину "Вы"
+     */
+    createCenterVertex() {
+        // Создаем элемент центральной вершины
+        const centerElement = document.createElement('div');
+        centerElement.className = 'vertex center-vertex';
+        centerElement.textContent = 'Вы';
+        centerElement.style.left = '0px';
+        centerElement.style.top = '0px';
+        centerElement.style.cursor = 'default';
         
-        console.log('✅ Сетка создана: 200x200 линий, размер ячейки', this.gridSize, 'px');
+        // Добавляем на канвас
+        this.canvas.appendChild(centerElement);
+        
+        // Сохраняем информацию о центральной вершине
+        this.centerVertex = {
+            id: 'center-vertex',
+            title: 'Вы',
+            element: centerElement,
+            x: 0,
+            y: 0,
+            isCenter: true,
+            tags: ['#центральная_точка'],
+            errors: [],
+            contacts: '',
+            budget: 0,
+            date: '',
+            participants: 1
+        };
+        
+        this.events.push(this.centerVertex);
+        
+        console.log('✅ Центральная вершина "Вы" создана');
     }
     
     /**
      * Обновление вида канваса
      */
     updateView() {
-        if (!this.canvas) return;
-        
         this.canvas.style.transform = `
             translate(${this.position.x}px, ${this.position.y}px)
             scale(${this.scale})
         `;
         
-        // Обновляем индикатор
         this.updatePositionIndicator();
         this.updateZoomIndicator();
     }
@@ -194,8 +171,7 @@ class InfiniteCanvas {
      */
     handleMouseDown(e) {
         // Игнорируем клики на вершины
-        if (e.target.classList.contains('vertex') || 
-            e.target.closest('.vertex')) {
+        if (e.target.classList.contains('vertex')) {
             return;
         }
         
@@ -249,7 +225,7 @@ class InfiniteCanvas {
         if (newScale !== this.scale) {
             this.scale = newScale;
             
-            // Корректируем позицию для сохранения точки под курсором
+            // Корректируем позицию
             this.position.x = mouseX - worldX * this.scale;
             this.position.y = mouseY - worldY * this.scale;
             
@@ -268,72 +244,6 @@ class InfiniteCanvas {
         gridLines.forEach(line => {
             line.style.opacity = opacity;
         });
-    }
-    
-    /**
-     * Touch события
-     */
-    handleTouchStart(e) {
-        if (e.touches.length === 2) {
-            // Начало pinch-зума
-            this.handlePinchStart(e);
-        } else if (e.touches.length === 1) {
-            // Начало перетаскивания
-            const touch = e.touches[0];
-            this.handleMouseDown({ 
-                clientX: touch.clientX, 
-                clientY: touch.clientY,
-                target: e.target,
-                preventDefault: () => e.preventDefault()
-            });
-        }
-    }
-    
-    handleTouchMove(e) {
-        if (e.touches.length === 2) {
-            // Pinch-зум
-            this.handlePinchMove(e);
-        } else if (e.touches.length === 1 && this.isDragging) {
-            // Перетаскивание
-            const touch = e.touches[0];
-            this.handleMouseMove({ 
-                clientX: touch.clientX, 
-                clientY: touch.clientY 
-            });
-        }
-    }
-    
-    handleTouchEnd() {
-        this.handleMouseUp();
-    }
-    
-    handlePinchStart(e) {
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        
-        this.pinchStartDistance = Math.hypot(
-            touch2.clientX - touch1.clientX,
-            touch2.clientY - touch1.clientY
-        );
-        this.pinchStartScale = this.scale;
-    }
-    
-    handlePinchMove(e) {
-        if (e.touches.length !== 2) return;
-        
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        
-        const distance = Math.hypot(
-            touch2.clientX - touch1.clientX,
-            touch2.clientY - touch1.clientY
-        );
-        
-        const scale = this.pinchStartScale * (distance / this.pinchStartDistance);
-        this.scale = Math.max(this.minScale, Math.min(this.maxScale, scale));
-        
-        this.updateView();
-        this.updateGrid();
     }
     
     /**
@@ -363,122 +273,35 @@ class InfiniteCanvas {
      * Настройка навигации
      */
     setupNavigation() {
-        console.log('🟡 Настройка навигации...');
-        
         // Центрирование
-        const centerBtn = document.getElementById('center-view');
-        if (centerBtn) {
-            centerBtn.addEventListener('click', () => {
-                this.centerView();
-            });
-            console.log('✅ Кнопка center-view подключена');
-        } else {
-            console.warn('⚠️ Кнопка center-view не найдена');
-        }
-        
-        // Зум +
-        const zoomInBtn = document.getElementById('zoom-in');
-        if (zoomInBtn) {
-            zoomInBtn.addEventListener('click', () => {
-                this.zoomIn();
-            });
-            console.log('✅ Кнопка zoom-in подключена');
-        } else {
-            console.warn('⚠️ Кнопка zoom-in не найдена');
-        }
-        
-        // Зум -
-        const zoomOutBtn = document.getElementById('zoom-out');
-        if (zoomOutBtn) {
-            zoomOutBtn.addEventListener('click', () => {
-                this.zoomOut();
-            });
-            console.log('✅ Кнопка zoom-out подключена');
-        } else {
-            console.warn('⚠️ Кнопка zoom-out не найдена');
-        }
-        
-        // Сброс зума
-        const resetZoomBtn = document.getElementById('reset-zoom');
-        if (resetZoomBtn) {
-            resetZoomBtn.addEventListener('click', () => {
-                this.resetZoom();
-            });
-            console.log('✅ Кнопка reset-zoom подключена');
-        } else {
-            console.warn('⚠️ Кнопка reset-zoom не найдена');
-        }
-        
-        console.log('✅ Навигация настроена');
-    }
-
-    /**
-     * Создаем центральную вершину;
-     */
-
-    createCenterVertex() {
-        // Удаляем старую центральную вершину если есть
-        if (this.centerVertex && this.centerVertex.element) {
-            this.centerVertex.element.remove();
-        }
-        
-        // Создаем элемент центральной вершины
-        const centerElement = document.createElement('div');
-        centerElement.className = 'vertex center-vertex';
-        centerElement.textContent = 'Вы';
-        centerElement.style.position = 'absolute';
-        centerElement.style.left = '0px';
-        centerElement.style.top = '0px';
-        centerElement.style.width = '100px';
-        centerElement.style.height = '100px';
-        centerElement.style.backgroundColor = 'var(--primary)';
-        centerElement.style.border = '3px solid var(--green)';
-        centerElement.style.fontWeight = 'bold';
-        centerElement.style.fontSize = '16px';
-        centerElement.style.zIndex = '5';
-        centerElement.style.cursor = 'default';
-        
-        // НЕ позволяем перетаскивать центральную вершину
-        centerElement.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
+        document.getElementById('center-view')?.addEventListener('click', () => {
+            this.centerView();
         });
         
-        // Добавляем на канвас
-        this.canvas.appendChild(centerElement);
+        // Зум +
+        document.getElementById('zoom-in')?.addEventListener('click', () => {
+            this.zoomIn();
+        });
         
-        // Сохраняем информацию о центральной вершине
-        this.centerVertex = {
-            id: 'center-vertex',
-            title: 'Вы',
-            element: centerElement,
-            x: 0,
-            y: 0,
-            isCenter: true,
-            tags: ['#центральная_точка'],
-            errors: [],
-            contacts: '',
-            budget: 0,
-            date: '',
-            participants: 1
-        };
+        // Зум -
+        document.getElementById('zoom-out')?.addEventListener('click', () => {
+            this.zoomOut();
+        });
         
-        // Центрируем вид на центральной вершине
-        this.centerView();
-        
-        console.log('✅ Центральная вершина "Вы" создана');
+        // Сброс зума
+        document.getElementById('reset-zoom')?.addEventListener('click', () => {
+            this.resetZoom();
+        });
     }
     
     /**
-     * Центрирование вида на центральной вершине
+     * Центрирование вида
      */
     centerView() {
-        // Центрируем на (0, 0) - где находится центральная вершина
         this.position = { x: 0, y: 0 };
         this.scale = 1;
         this.updateView();
         this.updateGrid();
-        console.log('✅ Вид отцентрирован на "Вы"');
     }
     
     /**
@@ -490,7 +313,6 @@ class InfiniteCanvas {
             this.scale = newScale;
             this.updateView();
             this.updateGrid();
-            console.log('✅ Увеличение до:', this.scale);
         }
     }
     
@@ -503,7 +325,6 @@ class InfiniteCanvas {
             this.scale = newScale;
             this.updateView();
             this.updateGrid();
-            console.log('✅ Уменьшение до:', this.scale);
         }
     }
     
@@ -514,11 +335,44 @@ class InfiniteCanvas {
         this.scale = 1;
         this.updateView();
         this.updateGrid();
-        console.log('✅ Зум сброшен до 100%');
     }
     
     /**
-     * Перемещение к определенной точке
+     * Добавление вершины
+     */
+    addVertex(vertex) {
+        if (!vertex || !vertex.element) return;
+        
+        // Для нецентральных вершин - позиционируем по кругу
+        if (!vertex.isCenter) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 300 + Math.random() * 200;
+            
+            vertex.x = Math.cos(angle) * radius;
+            vertex.y = Math.sin(angle) * radius;
+            
+            // Привязка к сетке
+            const snapped = this.snapToGrid(vertex.x, vertex.y);
+            vertex.x = snapped.x;
+            vertex.y = snapped.y;
+        }
+        
+        // Устанавливаем позицию
+        vertex.element.style.left = vertex.x + 'px';
+        vertex.element.style.top = vertex.y + 'px';
+        
+        // Добавляем на канвас
+        this.canvas.appendChild(vertex.element);
+        this.events.push(vertex);
+        
+        // Центрируем на новой вершине
+        if (!vertex.isCenter) {
+            this.moveTo(vertex.x, vertex.y);
+        }
+    }
+    
+    /**
+     * Перемещение к точке
      */
     moveTo(x, y) {
         const rect = this.container.getBoundingClientRect();
@@ -529,82 +383,6 @@ class InfiniteCanvas {
         this.position.y = centerY - y * this.scale;
         
         this.updateView();
-        console.log('✅ Перемещено к точке:', x, y);
-    }
-    
-    /**
-     * Добавление вершины
-     */
-    addVertex(vertex) {
-        if (!vertex || !vertex.element) {
-            console.warn('❌ Не могу добавить вершину: нет элемента');
-            return;
-        }
-        
-        console.log('🟡 Добавление вершины:', vertex.title);
-        console.log('🟡 Исходные координаты:', vertex.x, vertex.y);
-        
-        // ЕСЛИ ЭТО НЕ ЦЕНТРАЛЬНАЯ ВЕРШИНА - создаем рядом с центром
-        if (!vertex.isCenter) {
-            // Генерируем позицию по кругу вокруг центра
-            const angle = Math.random() * Math.PI * 2;
-            const radius = 300 + Math.random() * 200; // 300-500px от центра
-            
-            vertex.x = Math.cos(angle) * radius;
-            vertex.y = Math.sin(angle) * radius;
-            
-            console.log('🟡 Новая позиция (по кругу):', vertex.x, vertex.y);
-        }
-        
-        // Позиционируем по сетке
-        const snapped = this.snapToGrid(vertex.x, vertex.y);
-        vertex.x = snapped.x;
-        vertex.y = snapped.y;
-        
-        console.log('🟡 Координаты после сетки:', vertex.x, vertex.y);
-        
-        // Устанавливаем стили
-        vertex.element.style.position = 'absolute';
-        vertex.element.style.left = vertex.x + 'px';
-        vertex.element.style.top = vertex.y + 'px';
-        vertex.element.style.zIndex = '2';
-        
-        // Если это не центральная вершина, добавляем возможность перетаскивания
-        if (!vertex.isCenter) {
-            vertex.element.style.cursor = 'pointer';
-        }
-        
-        // Добавляем на канвас
-        this.canvas.appendChild(vertex.element);
-        this.events.push(vertex);
-        
-        console.log('✅ Вершина добавлена на канвас');
-        
-        // Автоматически центрируем на новой вершине (только если это не центральная)
-        if (!vertex.isCenter) {
-            this.moveTo(vertex.x, vertex.y);
-        }
-    }
-    
-    /**
-     * Получает центральную вершину
-     */
-    getCenterVertex() {
-        return this.centerVertex;
-    }
-    
-    /**
-     * Рассчитывает позицию на круге вокруг центра
-     */
-    getPositionOnCircle(radius = 300, angle = null) {
-        if (angle === null) {
-            angle = Math.random() * Math.PI * 2;
-        }
-        
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
-        
-        return this.snapToGrid(x, y);
     }
     
     /**
@@ -631,10 +409,24 @@ class InfiniteCanvas {
     }
     
     /**
-     * Получить все события
+     * Получение позиции на круге
      */
-    getAllEvents() {
-        return this.events;
+    getPositionOnCircle(radius = 300, angle = null) {
+        if (angle === null) {
+            angle = Math.random() * Math.PI * 2;
+        }
+        
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        
+        return this.snapToGrid(x, y);
+    }
+    
+    /**
+     * Получает центральную вершину
+     */
+    getCenterVertex() {
+        return this.centerVertex;
     }
     
     /**
@@ -647,6 +439,5 @@ class InfiniteCanvas {
             }
         });
         this.connections = [];
-        console.log('✅ Все связи очищены');
     }
 }
