@@ -22,6 +22,8 @@
     --gray-darker: #85848b;
     --green: #22D496;
     --red: #d42222;
+    --blue: #4a7bff;
+    --yellow: #ffc107;
 }
 
 header {
@@ -77,80 +79,22 @@ ul {
     display: none;
 }
 
-/* # ---- Стили для новых полей ввода ---- # */
+/* # ---- Стили для инпутов ---- # */
 input[type="date"],
 input[type="number"] {
+    font-family: Lato, 'Segoe UI', sans-serif;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 14px;
-    width: 100%;
-    margin-top: 5px;
-}
-
-input[type="date"]:focus,
-input[type="number"]:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(103, 102, 139, 0.2);
-}
-
-/* # ---- Стили для информационного сайдбара ---- # */
-#info-similarity {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-    margin-left: 5px;
-}
-
-#info-similarity.high {
-    background-color: rgba(34, 212, 150, 0.2);
-    color: #117a65;
-}
-
-#info-similarity.medium {
-    background-color: rgba(255, 193, 7, 0.2);
-    color: #856404;
-}
-
-#info-similarity.low {
-    background-color: rgba(108, 117, 125, 0.2);
-    color: #495057;
-}
-
-/* # ---- Адаптивные стили ---- # */
-@media (max-width: 768px) {
-    .card {
-        min-width: 280px;
-        padding: 15px;
-    }
-    
-    .info-sidebar,
-    .recommendations-sidebar {
-        width: 280px;
-    }
 }
 
 /* # ---- Анимации ---- # */
-.vertex {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-.line-connection {
-    transition: opacity 0.3s ease;
-}
-
-/* # ---- Улучшенные стили для карточек ---- # */
-.card label {
-    display: block;
-    margin-bottom: 15px;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.card input {
-    margin-top: 5px;
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
 }

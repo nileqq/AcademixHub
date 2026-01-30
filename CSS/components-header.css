@@ -36,6 +36,7 @@
     border-radius: 50%;
     background-color: white;
     overflow: hidden;
+    font-size: 18px;
 }
 
 /* # ---- Сайдбар ---- # */
@@ -75,6 +76,11 @@
 .add-new-project {
     color: white;
     font-size: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    cursor: pointer;
 }
 
 /* # ---- Навигационная панель ---- # */
@@ -83,11 +89,33 @@
     justify-content: center;
 }
 
-#tag-filter {
+#tag-filter,
+#budget-filter,
+#date-filter,
+#participants-filter {
     width: 100%;
     padding: 8px 12px;
+    margin-bottom: 10px;
     border-radius: 8px;
     border: none;
     outline: none;
     font-size: 14px;
+}
+
+#show-recommendations,
+#show-development {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: var(--green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#show-recommendations:hover,
+#show-development:hover {
+    background-color: #1bc184;
 }

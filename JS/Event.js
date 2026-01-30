@@ -107,7 +107,7 @@ class Event {
             tags: this.tags.join(', '),
             errors: this.errors.join(', '),
             contacts: this.contacts,
-            budget: `${formatNumber(this.budget, 'KZT')}`, // Изменено с ₽ на ₸
+            budget: `${formatNumber(this.budget)} KZT`, // Изменено на KZT
             date: formatDate(this.date),
             participants: `${formatNumber(this.participants)} чел.`
         };

@@ -1,42 +1,111 @@
 /* 
 Файл: components-main.css
 В этом файле пишутся элементы <main>:
+- бесконечная сетка
 - сайдбар с информацией
 - ребра
 - вершины
 - и другое..
 */
 
-/* # ---- Бокс ---- # */
-.box {
-    width: 800px;
-    height: 600px;
-    background-color: #f0f0f0;
+/* # ---- Бесконечная сетка и канвас ---- # */
+
+/* # ---- Контейнер бесконечной сетки ---- # */
+.infinite-canvas-container {
     position: relative;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #f5f5f7;
+    cursor: grab;
 }
 
+.infinite-canvas-container:active {
+    cursor: grabbing;
+}
+
+.infinite-canvas {
+    position: relative;
+    width: 10000px;
+    height: 10000px;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform-origin: 0 0;
+    transition: transform 0.1s ease-out;
+    will-change: transform;
+}
+
+/* # ---- Сетка ---- # */
+.grid-line {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.grid-line.horizontal {
+    width: 100%;
+    height: 1px;
+}
+
+.grid-line.vertical {
+    width: 1px;
+    height: 100%;
+}
+
+/* # ---- Вершины ---- # */
 .vertex {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background-color: var(--primary);
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 80px;
-    height: 80px;
-    position: absolute;
-    background-color: var(--primary);
-    color: white;
-    padding: 10px;
-    border-radius: 50%;
     cursor: pointer;
-    font-size: clamp(2px, 2px + 0.5vw, 16px);
-    z-index: 1;
+    font-size: 12px;
+    padding: 5px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    z-index: 2;
+    word-break: break-word;
+    overflow: hidden;
 }
 
 .vertex:hover {
-    transform: scale(1.2);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    font-size: clamp(3px, 3px + 0.5vw, 18px);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: var(--green);
+    z-index: 3;
+}
+
+/* # ---- Центральная вершина ---- # */
+.vertex.center-vertex {
+    width: 100px !important;
+    height: 100px !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-darker) 100%) !important;
+    border: 3px solid var(--green) !important;
+    box-shadow: 0 0 20px rgba(34, 212, 150, 0.5) !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    z-index: 5 !important;
+    cursor: default !important;
+    animation: pulse 2s infinite;
+}
+
+.vertex.center-vertex:hover {
+    transform: none !important;
+    box-shadow: 0 0 25px rgba(34, 212, 150, 0.7) !important;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 20px rgba(34, 212, 150, 0.5); }
+    50% { box-shadow: 0 0 30px rgba(34, 212, 150, 0.8); }
+    100% { box-shadow: 0 0 20px rgba(34, 212, 150, 0.5); }
 }
 
 /* # ---- Подсветка вершины ---- # */
@@ -47,111 +116,105 @@
 }
 
 @keyframes vertex-highlight {
-    0% {
-        box-shadow: 0 0 0 0 rgba(34, 212, 150, 0.7);
-        transform: scale(1);
-    }
-    20% {
-        box-shadow: 0 0 20px 10px rgba(34, 212, 150, 0.7);
-        transform: scale(1.1);
-    }
-    80% {
-        box-shadow: 0 0 20px 10px rgba(34, 212, 150, 0.7);
-        transform: scale(1.1);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(34, 212, 150, 0);
-        transform: scale(1);
-    }
+    0% { box-shadow: 0 0 0 0 rgba(34, 212, 150, 0.7); transform: scale(1); }
+    20% { box-shadow: 0 0 20px 10px rgba(34, 212, 150, 0.7); transform: scale(1.1); }
+    80% { box-shadow: 0 0 20px 10px rgba(34, 212, 150, 0.7); transform: scale(1.1); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 212, 150, 0); transform: scale(1); }
 }
 
-/* Альтернативные цвета подсветки для разных типов */
-.vertex.highlighted.tag {
-    animation: vertex-highlight-tag 3s ease-in-out;
-}
-
-@keyframes vertex-highlight-tag {
-    0% {
-        box-shadow: 0 0 0 0 rgba(34, 212, 150, 0.7);
-    }
-    20% {
-        box-shadow: 0 0 20px 10px rgba(34, 212, 150, 0.7);
-    }
-    80% {
-        box-shadow: 0 0 20px 10px rgba(34, 212, 150, 0.7);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(34, 212, 150, 0);
-    }
-}
-
-.vertex.highlighted.error {
-    animation: vertex-highlight-error 3s ease-in-out;
-}
-
-@keyframes vertex-highlight-error {
-    0% {
-        box-shadow: 0 0 0 0 rgba(212, 34, 34, 0.7);
-    }
-    20% {
-        box-shadow: 0 0 20px 10px rgba(212, 34, 34, 0.7);
-    }
-    80% {
-        box-shadow: 0 0 20px 10px rgba(212, 34, 34, 0.7);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(212, 34, 34, 0);
-    }
-}
-
-/* Подсветка для рекомендаций */
-.vertex.highlighted.recommendation {
-    animation: vertex-highlight-recommendation 4s ease-in-out;
-}
-
-@keyframes vertex-highlight-recommendation {
-    0% {
-        box-shadow: 0 0 0 0 rgba(103, 102, 139, 0.7);
-        transform: scale(1);
-    }
-    15% {
-        box-shadow: 0 0 25px 12px rgba(103, 102, 139, 0.8);
-        transform: scale(1.15);
-    }
-    85% {
-        box-shadow: 0 0 25px 12px rgba(103, 102, 139, 0.8);
-        transform: scale(1.15);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(103, 102, 139, 0);
-        transform: scale(1);
-    }
-}
-
+/* # ---- Линии связей ---- # */
 .line-connection {
     position: absolute;
     height: 2px;
     transform-origin: 0 0;
-    z-index: 0;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
 }
 
 .line-connection.tag {
     background-color: var(--green);
-}
-
-.line-connection.tag:hover {
-    box-shadow: 0 2px 10px var(--green);
+    opacity: 0.6;
 }
 
 .line-connection.error {
-    background-color: red;
+    background-color: var(--red);
+    opacity: 0.6;
 }
 
-.line-connection.error:hover {
-    box-shadow: 0 2px 10px var(--red);
+.line-connection.center-connection {
+    background-color: var(--primary);
+    opacity: 0.4;
+    height: 3px;
 }
 
-/* # ---- Карточки ---- № */
+.line-connection:hover {
+    opacity: 1;
+}
+
+.line-connection.center-connection:hover {
+    opacity: 0.8;
+    background-color: var(--green);
+}
+
+/* # ---- Эффекты перетаскивания ---- # */
+.infinite-canvas.dragging {
+    cursor: grabbing;
+}
+
+/* # ---- Индикатор положения ---- # */
+.position-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+}
+
+.position-indicator span {
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* # ---- Элементы управления ---- # */
+.navigation-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+}
+
+.nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* # ---- Карточки ---- # */
 .card-overlay {
     position: fixed;
     top: 0;
@@ -170,19 +233,31 @@
     padding: 20px;
     border-radius: 10px;
     min-width: 300px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .card label {
     display: block;
     margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--text);
 }
 
 .card input {
     width: 100%;
     margin-top: 5px;
-    padding: 5px;
+    padding: 8px;
     border-radius: 5px;
     border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.card input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(103, 102, 139, 0.2);
 }
 
 .btn.in-box {
@@ -190,18 +265,40 @@
     border: 1px solid rgb(141, 141, 141);
     margin-bottom: 10px;
     border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .btn.in-box:hover {
-    background-color: #ccc;
+    background-color: #f0f0f0;
 }
 
 .create {
     background-color: var(--green);
+    color: white;
+}
+
+.create:hover {
+    background-color: #1bc184;
 }
 
 .close {
-    background-color: red;
+    background-color: var(--red);
+    color: white;
+}
+
+.close:hover {
+    background-color: #c11b1b;
+}
+
+.save {
+    background-color: var(--blue);
+    color: white;
+}
+
+.save:hover {
+    background-color: #3a6be8;
 }
 
 .wrapper.in-box {
@@ -210,6 +307,8 @@
     background-color: transparent;
     max-height: 70px;
     width: 100%;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 /* # ---- Сайдбар с инфо о вершине ---- # */
@@ -224,6 +323,7 @@
     padding: 20px;
     transition: right 0.3s ease;
     z-index: 5;
+    overflow-y: auto;
 }
 
 .info-sidebar.open {
@@ -232,6 +332,13 @@
 
 .info-sidebar h3 {
     margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.info-sidebar p {
+    margin-bottom: 10px;
+    line-height: 1.4;
 }
 
 .info-sidebar button {
@@ -241,20 +348,46 @@
 .info-sidebar > .line.in-box {
     background-color: var(--primary);
     margin-top: 20px;
+    margin-bottom: 20px;
 }
 
-/* # ---- Окно редактирования ---- # */
+/* # ---- Индикатор схожести ---- # */
+.similarity-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.similarity-indicator.high {
+    background-color: rgba(34, 212, 150, 0.2);
+    color: #117a65;
+}
+
+.similarity-indicator.medium {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #856404;
+}
+
+.similarity-indicator.low {
+    background-color: rgba(108, 117, 125, 0.2);
+    color: #495057;
+}
+
+/* # ---- Оверлеи ---- # */
 .overlay {
-    display: none;             /* по умолчанию скрыт */
-    position: fixed;           /* поверх всего */
+    display: none;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5); /* затемнённый фон */
-    justify-content: center;   /* центрируем по горизонтали */
-    align-items: center;       /* центрируем по вертикали */
-    z-index: 1000;             /* чтобы было поверх всех элементов */
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .overlay .card {
@@ -265,21 +398,33 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* # ---- Окно закрытия ---- # */
-
-#auth-title {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.close-overlay {
-    max-width: 30px;
-}
-
-.arrow {
-    position: relative;
-    max-width: 50px;
-    left: 80%;
+/* # ---- Адаптивность ---- # */
+@media (max-width: 768px) {
+    .position-indicator {
+        flex-direction: column;
+        gap: 5px;
+        bottom: 10px;
+        left: 10px;
+        font-size: 11px;
+    }
+    
+    .navigation-controls {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .nav-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .info-sidebar {
+        width: 280px;
+    }
+    
+    .card {
+        min-width: 280px;
+        padding: 15px;
+    }
 }

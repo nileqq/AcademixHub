@@ -5,25 +5,85 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let graphManager = null;
     let currentUser = null;
+    let infiniteCanvas = null;
     
-    try {
-        // Инициализируем менеджер графа
-        graphManager = new GraphManager('graph-box');
-        
-        // Загружаем данные из localStorage
-        loadFromLocalStorage();
-        
-        // Настраиваем обработчики событий
-        setupEventListeners();
-        
-        console.log('DNA Engine успешно загружен');
-        
-    } catch (error) {
-        console.error('Ошибка при загрузке приложения:', error);
-        alert('Произошла ошибка при загрузке приложения. Пожалуйста, проверьте консоль для подробностей.');
-    }
+    // Даем время на загрузку всех элементов
+    setTimeout(() => {
+        try {
+            console.log('🟡 Пытаемся создать InfiniteCanvas...');
+            infiniteCanvas = new InfiniteCanvas('graph-box');
+            
+            if (!infiniteCanvas || !infiniteCanvas.container) {
+                console.error('❌ InfiniteCanvas не создан');
+                return;
+            }
+            
+            console.log('✅ InfiniteCanvas создан');
+            
+            // Инициализируем менеджер графа
+            graphManager = new GraphManager('graph-box');
+            console.log('✅ GraphManager создан');
+            
+            setupCanvasIntegration(infiniteCanvas, graphManager);
+            
+            // Загружаем данные из localStorage
+            loadFromLocalStorage();
+            
+            // Настраиваем обработчики событий
+            setupEventListeners();
+            
+            console.log('✅ DNA Engine успешно загружен');
+            
+        } catch (error) {
+            console.error('❌ Ошибка при загрузке приложения:', error);
+            alert('Произошла ошибка при загрузке приложения. Пожалуйста, проверьте консоль для подробностей.');
+        }
+    }, 100); // 100ms задержка
     
     // # ---- Функции ---- #
+    
+    function setupCanvasIntegration(canvas, graph) {
+        if (!canvas || !canvas.snapToGrid) {
+            console.warn('Canvas не инициализирован или не имеет метода snapToGrid');
+            return;
+        }
+        
+        console.log('🟡 Настройка интеграции canvas и графа');
+        
+        // Сохраняем оригинальный метод добавления события
+        const originalAddEvent = graph.addEvent;
+        
+        // Переопределяем метод добавления события
+        graph.addEvent = function(eventData) {
+            console.log('🟡 Добавление события через интегрированный метод');
+            
+            // Создаем событие через оригинальный метод
+            const event = originalAddEvent.call(graph, eventData);
+            
+            if (!event) {
+                console.error('❌ Событие не создано');
+                return null;
+            }
+            
+            // Позиционируем по сетке
+            const snapped = canvas.snapToGrid(event.x, event.y);
+            event.x = snapped.x;
+            event.y = snapped.y;
+            
+            if (event.element) {
+                event.element.style.left = snapped.x + 'px';
+                event.element.style.top = snapped.y + 'px';
+                event.element.style.position = 'absolute';
+            }
+            
+            // Добавляем вершину на канвас
+            if (canvas.addVertex) {
+                canvas.addVertex(event);
+            }
+            
+            return event;
+        };
+    }
     
     function setupEventListeners() {
         // Кнопки добавления/редактирования
@@ -309,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Общая схожесть: ${similarity.toFixed(2)}
             </div>
             <div class="recommendation-meta">
-                <div>💰 Бюджет: ${formatNumber(event.budget)}</div>
+                <div>💰 Бюджет: ${formatNumber(event.budget)} KZT</div>
                 <div>📅 Дата: ${formatDate(event.date)}</div>
                 <div>👥 Участники: ${formatNumber(event.participants)} чел.</div>
             </div>

@@ -49,7 +49,7 @@
 }
 
 .recommendation-card.medium {
-    border-left-color: #ffc107;
+    border-left-color: var(--yellow);
 }
 
 .recommendation-card.low {
@@ -60,6 +60,7 @@
     font-weight: bold;
     margin-bottom: 5px;
     color: var(--text);
+    font-size: 14px;
 }
 
 .recommendation-similarity {
@@ -90,10 +91,12 @@
     font-size: 13px;
     color: var(--gray-darker);
     margin-bottom: 3px;
+    line-height: 1.4;
 }
 
 .recommendation-tags {
     margin-top: 8px;
+    margin-bottom: 10px;
 }
 
 .recommendation-tag {
@@ -104,61 +107,23 @@
     font-size: 11px;
     margin-right: 5px;
     margin-bottom: 5px;
+    color: var(--text);
 }
 
-/* # ---- Индикатор схожести в сайдбаре ---- # */
-.similarity-indicator {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 10px;
-    font-size: 12px;
+.similarity-details {
+    font-size: 11px;
+    color: #666;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    line-height: 1.4;
 }
 
-.similarity-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 5px;
-}
-
-.similarity-dot.high {
-    background-color: var(--green);
-}
-
-.similarity-dot.medium {
-    background-color: #ffc107;
-}
-
-.similarity-dot.low {
-    background-color: #6c757d;
-}
-
-/* # ---- Фильтры ---- # */
-#budget-filter,
-#date-filter,
-#participants-filter {
+/* # ---- Кнопка выбора ---- # */
+.recommendation-card .btn.in-box {
     width: 100%;
-    padding: 8px 12px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 14px;
-}
-
-#show-recommendations {
-    width: 100%;
-    padding: 10px;
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-#show-recommendations:hover {
-    background-color: var(--primary-darker);
+    margin-top: 5px;
+    padding: 6px 12px;
+    font-size: 13px;
 }
 
 /* # ---- Адаптивность ---- # */

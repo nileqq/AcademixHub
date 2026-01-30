@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNA Engine - Рекомендации мероприятий</title>
+    <title>9Engineers</title>
     <link rel="stylesheet" href="CSS/main.css">
     <link rel="stylesheet" href="CSS/components-header.css">
     <link rel="stylesheet" href="CSS/components-main.css">
@@ -22,7 +22,7 @@
             </div>
 
             <div class="wrapper">
-                <div class="round" id="open-auth">lorem</div>
+                <div class="round" id="open-auth">👤</div>
             </div>
         </div>
 
@@ -42,7 +42,7 @@
                             <input type="text" id="tag-filter" placeholder="Фильтр по тегу (#решение)">
                         </li>
                         <li>
-                            <input type="number" id="budget-filter" placeholder="Макс. бюджет" min="0">
+                            <input type="number" id="budget-filter" placeholder="Макс. бюджет (KZT)" min="0">
                         </li>
                         <li>
                             <input type="date" id="date-filter" placeholder="Дата">
@@ -51,7 +51,10 @@
                             <input type="number" id="participants-filter" placeholder="Участников от" min="1">
                         </li>
                         <li>
-                            <button class="btn in-box" id="show-recommendations">Показать рекомендации</button>
+                            <button class="btn in-box" id="show-recommendations">Рекомендации</button>
+                        </li>
+                        <li>
+                            <button class="btn in-box" id="show-development">Мои направления</button>
                         </li>
                     </ul>
                 </nav>
@@ -60,7 +63,26 @@
     </header>
 
     <main>
-        <div class="box" id="graph-box"></div>
+        <div class="infinite-canvas-container">
+            <div class="infinite-canvas" id="graph-box">
+                <!-- Сетка и вершины будут добавлены через JS -->
+            </div>
+            
+            <!-- Индикаторы положения -->
+            <div class="position-indicator">
+                <span id="position-x">X: 0</span>
+                <span id="position-y">Y: 0</span>
+                <span id="zoom-level">100%</span>
+            </div>
+            
+            <!-- Кнопки навигации -->
+            <div class="navigation-controls">
+                <button class="nav-btn" id="center-view">🏠</button>
+                <button class="nav-btn" id="zoom-in">+</button>
+                <button class="nav-btn" id="zoom-out">-</button>
+                <button class="nav-btn" id="reset-zoom">100%</button>
+            </div>
+        </div>
         
         <!-- # ---- Сайдбар с информацией о событии ---- # -->
         <div id="info-sidebar" class="info-sidebar">
@@ -73,7 +95,7 @@
             <p><strong>Бюджет:</strong> <span id="info-budget"></span> KZT</p>
             <p><strong>Дата:</strong> <span id="info-date"></span></p>
             <p><strong>Участники:</strong> <span id="info-participants"></span> чел.</p>
-            <p><strong>Схожесть с текущим:</strong> <span id="info-similarity"></span></p>
+            <p><strong>Схожесть с центром:</strong> <span id="info-similarity"></span></p>
             
             <div class="line in-box"></div>
             <div class="wrapper in-box">
@@ -88,7 +110,7 @@
 
         <!-- # ---- Сайдбар с рекомендациями ---- # -->
         <div id="recommendations-sidebar" class="recommendations-sidebar">
-            <h3>Рекомендации мероприятий</h3>
+            <h3>Рекомендации</h3>
             <div id="recommendations-list"></div>
             <div class="wrapper in-box">
                 <button class="btn in-box close" id="close-recommendations">Закрыть</button>
@@ -99,7 +121,7 @@
     <!-- # ---- Оверлей для добавления вершин ---- # -->
     <div class="card-overlay" id="card-overlay">
         <div class="card">
-            <h2>Добавить Ивент:</h2>
+            <h2>Добавить направление развития:</h2>
             <label>Название:
                 <input type="text" id="vertex-title">
             </label>
@@ -116,7 +138,6 @@
                 <input type="text" id="vertex-contacts">
             </label>
 
-            <!-- # ---- Новые поля метаданных ---- # -->
             <label>Бюджет (KZT):
                 <input type="number" id="vertex-budget" min="0" value="0">
             </label>
@@ -156,44 +177,12 @@
         </div>
     </div>
 
-    <!-- # ---- Регистрация и Логин ---- # -->
-    <div id="auth-overlay" class="overlay">
-        <div class="card">
-            <!-- # -- Заголовок -- # -->
-            <h3 id="auth-title">
-                <span>Войти</span> 
-                <!-- # -- Кнопка закрытия оверлея -- # -->
-                <button id="close-auth" class="close-overlay btn in-box">X</button>
-            </h3>
-
-            <!-- # -- Логин -- #-->
-            <div id="login-form">
-                <input type="text" id="login-username" placeholder="Имя пользователя">
-                <input type="password" id="login-password" placeholder="Пароль">
-                <div class="wrapper in-box">
-                    <button id="login-btn" class="btn in-box">Войти</button>
-                </div>
-            </div>
-
-            <!-- # -- Регистрация -- # -->
-            <div id="register-form" >
-                <input type="text" id="reg-username" placeholder="Имя пользователя">
-                <input type="password" id="reg-password" placeholder="Пароль">
-                <input type="password" id="reg-password-confirm" placeholder="Подтвердить пароль">
-                <div class="wrapper in-box">
-                    <button id="register-btn" class="btn in-box">Регистрация</button>
-                </div>
-            </div>
-
-            <button id="toggle-auth" class="btn in-box arrow">→</button>
-        </div>
-    </div>
-
     <!-- # ---- Подключение JavaScript ---- # -->
     <script src="JS/utils.js"></script>
     <script src="JS/Event.js"></script>
     <script src="JS/SimilarityCalculator.js"></script>
     <script src="JS/GraphManager.js"></script>
+    <script src="JS/InfiniteCanvas.js"></script>
     <script src="JS/main.js"></script>
 </body>
 </html>

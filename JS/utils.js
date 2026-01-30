@@ -98,3 +98,14 @@ function formatNumber(num, currency = 'KZT') {
 function isEmpty(str) {
     return !str || !str.trim();
 }
+
+// Делаем функции доступными глобально для всех скриптов
+window.parseTags = parseTags;
+window.normalizeTag = normalizeTag;
+window.hasCommon = hasCommon;
+window.calculateSimilarityValue = calculateSimilarityValue;
+window.calculateDateSimilarity = calculateDateSimilarity;
+window.getSimilarityClass = getSimilarityClass;
+window.formatDate = formatDate;
+window.formatNumber = formatNumber;
+window.isEmpty = isEmpty;
