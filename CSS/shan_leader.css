@@ -1,0 +1,171 @@
+/* ===== Базовые настройки ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    margin: 0;
+}
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 40px;
+    flex-wrap: wrap;
+}
+
+h1 {
+    margin: 0 auto;
+}
+
+.back-btn {
+    text-decoration: none;
+    background: #2563eb;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.back-btn:hover {
+    background: #1d4ed8;
+}
+
+/* ===== Layout ===== */
+.layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    padding: 20px 40px;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-column {
+    flex: 1 1 600px; /* растягивается, минимум 300px */
+    min-width: 300px;
+}
+
+.side-column {
+    flex: 0 1 320px; /* фиксированная ширина, растягивается при необходимости */
+    min-width: 280px;
+}
+
+/* ===== Рейтинг ===== */
+.item {
+    background: white;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.gold { background: #fde68a; font-weight: bold; }
+.silver { background: #e5e7eb; font-weight: bold; }
+.bronze { background: #fcd34d; font-weight: bold; }
+
+/* ===== Панели ===== */
+.panel {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.change-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.up { color: green; font-weight: bold; }
+.down { color: red; font-weight: bold; }
+.neutral { color: #9ca3af; font-weight: bold; }
+
+.contributor {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tasks {
+    list-style: none;
+    padding: 0;
+}
+
+.tasks li {
+    background: #f9fafb;
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.tasks li:hover {
+    background: #e5e7eb;
+}
+
+/* ===== Модалка ===== */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.hide {
+    display: none;
+}
+
+.modal {
+    width: 100%;
+    max-width: 450px;
+}
+
+.btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn.primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn.secondary {
+    background: #e5e7eb;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+/* ===== Адаптив ===== */
+@media (max-width: 1000px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .main-column, .side-column {
+        width: 100%;
+        min-width: 0;
+    }
+}
+

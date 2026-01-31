@@ -3,151 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Рейтинг шаныраков</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f4f6;
-            padding: 40px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .layout {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            align-items: flex-start;
-        }
-
-        .list {
-            width: 600px;
-        }
-
-        .item {
-            background: white;
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 18px;
-        }
-
-        /* Топ-3 */
-        .gold { background: #fde68a; font-weight: bold; }
-        .silver { background: #e5e7eb; font-weight: bold; }
-        .bronze { background: #fcd34d; font-weight: bold; }
-
-        .place {
-            font-size: 20px;
-        }
-
-        /* Правая панель */
-        .changes {
-            width: 300px;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-        }
-
-        .changes h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        .change-item {
-            font-size: 14px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .up {
-            color: green;
-            font-weight: bold;
-        }
-
-        .down {
-            color: red;
-            font-weight: bold;
-        }
-        .change-item {
-            align-items: center;
-        }
-
-    </style>
+    <link rel="stylesheet" href="../CSS/shan_leader.css">
 </head>
 <body>
 
-<h1>Рейтинг шаныраков</h1>
+<header class="top-bar">
+    <a href="../index.html" class="back-btn">← Назад</a>
+    <h1>Рейтинг шаныраков</h1>
+</header>
 
 <div class="layout">
-    <!-- Рейтинг -->
-    <div class="list" id="ratingList"></div>
 
-    <!-- Последние изменения -->
-    <div class="changes">
-        <h3>Последние изменения</h3>
-        <div id="changesList"></div>
+    <!-- Левая колонка: Рейтинг -->
+    <div class="column main-column">
+        <div class="list" id="ratingList"></div>
+    </div>
+
+    <!-- Правая колонка: Изменения, Top Contributors, Задания -->
+    <div class="column side-column">
+
+        <div class="panel">
+            <h3>Последние изменения</h3>
+            <div id="changesList"></div>
+        </div>
+
+        <div class="panel">
+            <h3>🏆 Top Contributors</h3>
+            <div id="contributorsList"></div>
+        </div>
+
+        <div class="panel">
+            <h3>📋 Доска заданий</h3>
+            <ul class="tasks" id="taskBoard"></ul>
+        </div>
+
     </div>
 </div>
 
-<script>
-    const shanyraks = [
-        { name: "Алтын Ұя", points: 520 },
-        { name: "Бірлік", points: 430 },
-        { name: "Самғау", points: 610 },
-        { name: "Жігер", points: 390 },
-        { name: "Тұлпар", points: 470 }
-    ];
+<!-- Модалка для заданий -->
+<div class="overlay hide" id="task-modal">
+    <div class="panel modal">
+        <h3 id="task-title"></h3>
+        <p id="task-desc"></p>
+        <p><strong>Дедлайн:</strong> <span id="task-deadline"></span></p>
 
-    const changes = [
-        { name: "Самғау", diff: +30},
-        { name: "Тұлпар", diff: +20},
-        { name: "Бірлік", diff: -10},
-        { name: "Алтын Ұя", diff: +15}
-    ];
+        <input type="file" id="task-file">
 
+        <div class="row">
+            <button class="btn primary" onclick="submitTask()">Отправить</button>
+            <button class="btn secondary" onclick="closeTask()">Закрыть</button>
+        </div>
+    </div>
+</div>
 
-    shanyraks.sort((a, b) => b.points - a.points);
-
-    const ratingList = document.getElementById("ratingList");
-    const changesList = document.getElementById("changesList");
-
-    shanyraks.forEach((s, index) => {
-        const div = document.createElement("div");
-        div.className = "item";
-
-        if (index === 0) div.classList.add("gold");
-        if (index === 1) div.classList.add("silver");
-        if (index === 2) div.classList.add("bronze");
-
-        div.innerHTML = `
-            <span class="place">${index + 1}. ${s.name}</span>
-            <span>${s.points} баллов</span>
-        `;
-
-        ratingList.appendChild(div);
-    });
-
-    changes.forEach(c => {
-        const div = document.createElement("div");
-        div.className = "change-item";
-
-        div.innerHTML = `
-            <span>${c.name}</span>
-            <span class="${c.diff > 0 ? 'up' : 'down'}">
-                ${c.diff > 0 ? '+' : ''}${c.diff}
-            </span>
-        `;
-
-        changesList.appendChild(div);
-    });
-</script>
-
+<script src="../JS/shan_lead.js"></script>
 </body>
 </html>

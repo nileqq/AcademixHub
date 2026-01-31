@@ -33,18 +33,18 @@
 
             <div class="container" id="register" style="display:none;">
                 <h1>Регистрация</h1>
-                <input id="regIin" placeholder="ИИН">
-                <input id="regName" placeholder="Имя">
-                <input id="regSurname" placeholder="Фамилия">
-                <input id="regGrade" placeholder="Класс">
+                <input style = "width: 100%; margin-bottom: 15px;" id="regIin" placeholder="ИИН">
+                <input style = "width: 100%; margin-bottom: 15px;" id="regName" placeholder="Имя">
+                <input style = "width: 100%; margin-bottom: 15px;" id="regSurname" placeholder="Фамилия">
+                <input style = "width: 100%; margin-bottom: 15px;" id="regGrade" placeholder="Класс">
 
-                <select title="regRole" id="regRole">
+                <select title="regRole" id="regRole" style = "width: 75%; margin-top: 15px;margin-bottom: 15px;">
                     <option>Ученик</option>
                     <option>Сотрудник СК</option>
                     <option>Лидер шанырака</option>
                 </select>
 
-                <button class="" onclick="register()">Зарегистрироваться</button>
+                <button class="primary" onclick="register()">Зарегистрироваться</button>
                 <button class="secondary" onclick="goHome()">Назад</button>
             </div>
 
