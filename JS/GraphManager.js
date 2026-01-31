@@ -7,7 +7,11 @@ class GraphManager {
         this.vertexWidth = 80;
         this.vertexHeight = 80;
         this.selectedEvent = null;
+        // Рёбра (DOM-линии)
         this.connections = [];
+        this.connectionMap = new Map(); // key -> { line, e1, e2, type }
+        this._connectionsNeedRebuild = true;
+        this._rafConnections = null;
         
         if (!this.container) {
             console.error('Контейнер графа не найден:', containerId);
@@ -47,7 +51,8 @@ class GraphManager {
         
         this.events.push(event);
         this.renderEvent(event);
-        this.renderAllConnections();
+        this.rebuildConnections();
+        this.scheduleConnectionsLayout();
         
         return event;
     }
@@ -69,7 +74,8 @@ class GraphManager {
         this.events.splice(index, 1);
         
         // Обновляем связи
-        this.renderAllConnections();
+        this.rebuildConnections();
+        this.scheduleConnectionsLayout();
         
         return true;
     }
@@ -82,7 +88,8 @@ class GraphManager {
         if (!event) return false;
         
         event.update(data);
-        this.renderAllConnections();
+        this.rebuildConnections();
+        this.scheduleConnectionsLayout();
         
         return true;
     }
@@ -118,7 +125,7 @@ class GraphManager {
      */
     setupEventDragging(event, element) {
         let isDragging = false;
-        let offsetX, offsetY;
+        let offsetX = 0, offsetY = 0;
         let startX, startY;
         
         element.addEventListener('mousedown', (e) => {
@@ -131,25 +138,46 @@ class GraphManager {
             isDragging = true;
             startX = event.x;
             startY = event.y;
-            offsetX = e.offsetX;
-            offsetY = e.offsetY;
+
+            // IMPORTANT:
+            // Канвас трансформируется (translate + scale), поэтому e.offsetX/offsetY
+            // и clientX->rect... даёт неверные координаты в мире.
+            // Берём мировые координаты через InfiniteCanvas.
+            const canvas = window.infiniteCanvas;
+            if (canvas && canvas.getCanvasCoordinates) {
+                const p = canvas.getCanvasCoordinates(e.clientX, e.clientY);
+                offsetX = p.x - event.x;
+                offsetY = p.y - event.y;
+            } else {
+                // fallback (если по какой-то причине canvas недоступен)
+                offsetX = e.offsetX;
+                offsetY = e.offsetY;
+            }
             element.style.zIndex = '10';
             e.stopPropagation();
         });
         
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            
-            const rect = this.container.getBoundingClientRect();
-            const x = e.clientX - rect.left - offsetX;
-            const y = e.clientY - rect.top - offsetY;
-            
-            event.moveTo(x, y, {
-                width: rect.width,
-                height: rect.height
-            });
-            
-            this.renderAllConnections();
+
+            const canvas = window.infiniteCanvas;
+            let x, y;
+            if (canvas && canvas.getCanvasCoordinates) {
+                const p = canvas.getCanvasCoordinates(e.clientX, e.clientY);
+                x = p.x - offsetX;
+                y = p.y - offsetY;
+                // Привязка к сетке
+                const snapped = canvas.snapToGrid(x, y);
+                x = snapped.x;
+                y = snapped.y;
+            } else {
+                const rect = this.container.getBoundingClientRect();
+                x = e.clientX - rect.left - offsetX;
+                y = e.clientY - rect.top - offsetY;
+            }
+
+            event.moveTo(x, y);
+            this.scheduleConnectionsLayout();
         });
         
         document.addEventListener('mouseup', () => {
@@ -164,49 +192,122 @@ class GraphManager {
     }
 
     /**
-     * Отображает все связи
+     * (Новая версия) Мы больше не удаляем и не пересоздаём рёбра при каждом движении мыши.
+     * Теперь:
+     * 1) rebuildConnections() — пересчитывает список существующих рёбер (создаёт/удаляет DOM при необходимости)
+     * 2) scheduleConnectionsLayout() — обновляет позиционирование рёбер через requestAnimationFrame
      */
-    renderAllConnections() {
-        this.clearConnections();
-        
-        // Получаем центральную вершину если есть
-        const centerVertex = this.events.find(event => event.isCenter);
-        
-        // Рисуем связи между обычными вершинами
-        for (let i = 0; i < this.events.length; i++) {
-            const event1 = this.events[i];
-            if (event1.isCenter) continue;
-            
-            // Связи с другими обычными вершинами
-            for (let j = i + 1; j < this.events.length; j++) {
-                const event2 = this.events[j];
-                if (event2.isCenter) continue;
-                
-                this.drawConnection(event1, event2);
-            }
-            
-            // Связи с центральной вершиной
-            if (centerVertex) {
-                this.drawConnection(event1, centerVertex, 'center-connection');
-            }
+    rebuildConnections() {
+        // Помечаем, что нужен пересчёт набора рёбер
+        this._connectionsNeedRebuild = true;
+    }
+
+    scheduleConnectionsLayout() {
+        if (this._rafConnections) return;
+        this._rafConnections = requestAnimationFrame(() => {
+            this._rafConnections = null;
+            this.layoutConnections();
+        });
+    }
+
+    layoutConnections() {
+        // 1) при необходимости обновляем набор рёбер (создание/удаление)
+        if (this._connectionsNeedRebuild) {
+            this._connectionsNeedRebuild = false;
+            this.syncConnectionSet();
+        }
+
+        // 2) обновляем геометрию всех линий БЕЗ getBoundingClientRect()
+        for (const entry of this.connectionMap.values()) {
+            const { line, e1, e2 } = entry;
+            this.updateConnectionLineGeometry(line, e1, e2);
         }
     }
 
     /**
-     * Рисует связь между двумя мероприятиями
+     * Пересчитывает геометрию линии в "мировых" координатах canvas.
+     * Главное отличие от старой реализации:
+     * - мы не вызываем getBoundingClientRect() на каждом кадре (это триггерит layout),
+     * - используем event.x/event.y и известные размеры вершин.
+     * Так ребра обновляются намного плавнее.
      */
-    drawConnection(event1, event2, type = null) {
-        if (!event1.element || !event2.element) return;
-        
-        // Определяем тип связи если не указан
-        if (!type) {
-            type = this.getConnectionType(event1, event2);
-            if (!type) return;
+    updateConnectionLineGeometry(line, event1, event2) {
+        if (!line || !event1 || !event2) return;
+
+        const w = this.vertexWidth;
+        const h = this.vertexHeight;
+
+        const x1 = event1.x + w / 2;
+        const y1 = event1.y + h / 2;
+        const x2 = event2.x + w / 2;
+        const y2 = event2.y + h / 2;
+
+        const length = Math.hypot(x2 - x1, y2 - y1);
+        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+        line.style.width = length + 'px';
+        line.style.left = x1 + 'px';
+        line.style.top = y1 + 'px';
+        line.style.transform = `rotate(${angle}deg)`;
+
+        // Подсказка (title) оставляем — удобно.
+        if (line.classList.contains('center-connection')) {
+            line.title = 'Связь с центром';
+        } else {
+            line.title = `Схожесть: ${event1.calculateSimilarity(event2).toFixed(2)}`;
         }
-        
-        const line = this.createConnectionLine(event1, event2, type);
-        this.container.appendChild(line);
-        this.connections.push(line);
+    }
+
+
+    syncConnectionSet() {
+        const desired = new Map();
+
+        const centerVertex = this.events.find(e => e.isCenter);
+        const regular = this.events.filter(e => !e.isCenter && e.element && e.element.style.display !== 'none');
+
+        // Рёбра между обычными вершинами (только если есть причина: общие теги/ошибки)
+        for (let i = 0; i < regular.length; i++) {
+            for (let j = i + 1; j < regular.length; j++) {
+                const e1 = regular[i];
+                const e2 = regular[j];
+                const type = this.getConnectionType(e1, e2);
+                if (!type) continue;
+                const key = this.makeConnectionKey(e1, e2, type);
+                desired.set(key, { e1, e2, type });
+            }
+        }
+
+        // Рёбра «обычная -> центр» (всегда)
+        if (centerVertex && centerVertex.element && centerVertex.element.style.display !== 'none') {
+            for (const e of regular) {
+                const key = this.makeConnectionKey(e, centerVertex, 'center-connection');
+                desired.set(key, { e1: e, e2: centerVertex, type: 'center-connection' });
+            }
+        }
+
+        // Удаляем лишние
+        for (const [key, entry] of this.connectionMap.entries()) {
+            if (!desired.has(key)) {
+                entry.line.remove();
+                this.connectionMap.delete(key);
+            }
+        }
+
+        // Добавляем недостающие
+        for (const [key, spec] of desired.entries()) {
+            if (this.connectionMap.has(key)) continue;
+            const line = document.createElement('div');
+            line.className = `line-connection ${spec.type}`;
+            this.container.appendChild(line);
+            this.connectionMap.set(key, { line, ...spec });
+        }
+    }
+
+    makeConnectionKey(e1, e2, type) {
+        const a = String(e1.id);
+        const b = String(e2.id);
+        const [id1, id2] = a < b ? [a, b] : [b, a];
+        return `${id1}|${id2}|${type}`;
     }
 
     /**
@@ -221,47 +322,6 @@ class GraphManager {
         return null;
     }
 
-    /**
-     * Создает линию связи
-     */
-    createConnectionLine(event1, event2, type) {
-        const rect1 = event1.element.getBoundingClientRect();
-        const rect2 = event2.element.getBoundingClientRect();
-        const containerRect = this.container.getBoundingClientRect();
-        
-        const x1 = rect1.left - containerRect.left + rect1.width / 2;
-        const y1 = rect1.top - containerRect.top + rect1.height / 2;
-        const x2 = rect2.left - containerRect.left + rect2.width / 2;
-        const y2 = rect2.top - containerRect.top + rect2.height / 2;
-        
-        const line = document.createElement('div');
-        line.className = `line-connection ${type}`;
-        
-        const length = Math.hypot(x2 - x1, y2 - y1);
-        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-        
-        line.style.width = length + 'px';
-        line.style.left = x1 + 'px';
-        line.style.top = y1 + 'px';
-        line.style.transform = `rotate(${angle}deg)`;
-        
-        // Добавляем подсказку
-        if (type === 'center-connection') {
-            line.title = `Связь с центром`;
-        } else {
-            line.title = `Схожесть: ${event1.calculateSimilarity(event2).toFixed(2)}`;
-        }
-        
-        return line;
-    }
-
-    /**
-     * Очищает все связи
-     */
-    clearConnections() {
-        this.connections.forEach(line => line.remove());
-        this.connections = [];
-    }
 
     /**
      * Выбирает мероприятие
@@ -293,8 +353,9 @@ class GraphManager {
                 event.element.style.display = matches ? 'block' : 'none';
             }
         });
-        
-        this.renderAllConnections();
+
+        this.rebuildConnections();
+        this.scheduleConnectionsLayout();
     }
 
     /**

@@ -182,8 +182,16 @@ class Event {
      * Перемещает мероприятие
      */
     moveTo(x, y, container) {
-        this.x = Math.max(0, Math.min(x, container.width - 80));
-        this.y = Math.max(0, Math.min(y, container.height - 80));
+        // Раньше мы "зажимали" координаты в пределах видимого контейнера,
+        // что ломает идею бесконечной сетки (нельзя утащить вершину дальше экрана).
+        // Теперь clamp делаем только если явно передали границы.
+        if (container && typeof container.width === 'number' && typeof container.height === 'number') {
+            this.x = Math.max(0, Math.min(x, container.width - 80));
+            this.y = Math.max(0, Math.min(y, container.height - 80));
+        } else {
+            this.x = x;
+            this.y = y;
+        }
         
         if (this.element) {
             this.element.style.left = this.x + 'px';

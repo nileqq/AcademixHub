@@ -63,10 +63,9 @@
     </header>
 
     <main>
+        <!-- Бесконечная сетка -->
         <div class="infinite-canvas-container">
-            <div class="infinite-canvas" id="graph-box">
-                <!-- Сетка и вершины будут добавлены через JS -->
-            </div>
+            <div class="infinite-canvas" id="graph-box"></div>
             
             <!-- Индикаторы положения -->
             <div class="position-indicator">
@@ -99,12 +98,12 @@
             
             <div class="line in-box"></div>
             <div class="wrapper in-box">
-                <button class="btn in-box close" id="edit-vertex">Редактировать</button>
-                <button class="btn in-box close" id="delete-vertex">Удалить</button>
+                <button class="btn in-box" id="edit-vertex">Редактировать</button>
+                <button class="btn in-box" id="delete-vertex">Удалить</button>
             </div>
 
             <div class="wrapper in-box">
-                <button class="btn in-box close" id="close-info">Закрыть</button>
+                <button class="btn in-box" id="close-info">Закрыть</button>
             </div>
         </div>
 

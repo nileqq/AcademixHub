@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('✅ GraphManager создан');
             
             setupCanvasIntegration(infiniteCanvas, graphManager);
+            ensureCenterVertex(infiniteCanvas, graphManager);
             
             // Загружаем данные из localStorage
             loadFromLocalStorage();
@@ -89,7 +90,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Делаем canvas доступным глобально
         window.infiniteCanvas = canvas;
     }
-    
+
+    function ensureCenterVertex(canvas, graph) {
+        // Создаёт центральную вершину "Вы" в центре мира и центрирует камеру на ней.
+        const existing = graph.getCenterVertex?.();
+        if (existing) {
+            canvas.centerOn(existing.x, existing.y, { resetZoom: true });
+            return;
+        }
+
+        const centerEventData = {
+            id: 'center-vertex',
+            title: 'Вы',
+            isCenter: true,
+            x: canvas.worldCenter?.x ?? 5000,
+            y: canvas.worldCenter?.y ?? 5000,
+            tags: '#центр',
+            errors: '',
+            contacts: '',
+            budget: 0,
+            date: '',
+            participants: 1
+        };
+
+        const centerEvent = graph.addEvent(centerEventData);
+
+        if (centerEvent?.element) {
+            centerEvent.element.style.left = centerEvent.x + 'px';
+            centerEvent.element.style.top = centerEvent.y + 'px';
+        }
+
+        canvas.centerOn(centerEvent.x, centerEvent.y, { resetZoom: true });
+    }
+
     function setupEventListeners() {
         // Кнопки добавления/редактирования
         document.getElementById('open-card')?.addEventListener('click', showAddEventForm);

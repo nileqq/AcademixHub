@@ -35,15 +35,22 @@ class InfiniteCanvas {
         console.log('✅ Container:', this.container);
         console.log('✅ Canvas:', this.canvas);
         
+        // InfiniteCanvas отвечает только за панорамирование/зум и утилиты координат.
+        // Сами вершины/ребра хранит GraphManager.
         this.events = [];
         this.connections = [];
         
         // Параметры канваса
+        // position = translate (в пикселях экрана), scale = zoom.
         this.position = { x: 0, y: 0 };
         this.scale = 1;
         this.minScale = 0.1;
         this.maxScale = 3;
         this.gridSize = 50;
+
+        // Размер «мира» (совпадает с CSS width/height у .infinite-canvas)
+        this.worldSize = 10000;
+        this.worldCenter = { x: this.worldSize / 2, y: this.worldSize / 2 };
         
         // Состояние перетаскивания
         this.isDragging = false;
@@ -66,8 +73,12 @@ class InfiniteCanvas {
         
         this.setupEventListeners();
         this.createGrid();
-        this.createCenterVertex();
-        this.updateView();
+
+        // Важно: показываем центр сетки сразу при старте.
+        // Раньше position={0,0} означал «видим левый верхний угол мира»,
+        // из-за чего казалось, что стартуем в координатах ~5000px.
+        this.centerOn(this.worldCenter.x, this.worldCenter.y, { resetZoom: true });
+
         this.setupNavigation();
         
         console.log('✅ InfiniteCanvas полностью инициализирован');
@@ -165,6 +176,24 @@ class InfiniteCanvas {
         this.updatePositionIndicator();
         this.updateZoomIndicator();
     }
+
+    /**
+     * Центрирует камеру на мировых координатах (worldX, worldY)
+     * так, чтобы эта точка оказалась в центре экрана.
+     */
+    centerOn(worldX, worldY, { resetZoom = false } = {}) {
+        const rect = this.container.getBoundingClientRect();
+        if (resetZoom) this.scale = 1;
+
+        const viewCenterX = rect.width / 2;
+        const viewCenterY = rect.height / 2;
+
+        this.position.x = viewCenterX - worldX * this.scale;
+        this.position.y = viewCenterY - worldY * this.scale;
+
+        this.updateView();
+        this.updateGrid();
+    }
     
     /**
      * Обработчик нажатия мыши
@@ -252,10 +281,15 @@ class InfiniteCanvas {
     updatePositionIndicator() {
         const xElement = document.getElementById('position-x');
         const yElement = document.getElementById('position-y');
-        
+
+        // Хотим показывать «какие мировые координаты сейчас в центре экрана».
+        // Это интуитивно для mind-map: центр = текущий фокус.
         if (xElement && yElement) {
-            xElement.textContent = `X: ${Math.round(-this.position.x)}`;
-            yElement.textContent = `Y: ${Math.round(-this.position.y)}`;
+            const rect = this.container.getBoundingClientRect();
+            const worldCenterX = (rect.width / 2 - this.position.x) / this.scale;
+            const worldCenterY = (rect.height / 2 - this.position.y) / this.scale;
+            xElement.textContent = `X: ${Math.round(worldCenterX)}`;
+            yElement.textContent = `Y: ${Math.round(worldCenterY)}`;
         }
     }
     
@@ -298,10 +332,7 @@ class InfiniteCanvas {
      * Центрирование вида
      */
     centerView() {
-        this.position = { x: 0, y: 0 };
-        this.scale = 1;
-        this.updateView();
-        this.updateGrid();
+        this.centerOn(this.worldCenter.x, this.worldCenter.y, { resetZoom: true });
     }
     
     /**
@@ -344,15 +375,20 @@ class InfiniteCanvas {
         if (!vertex || !vertex.element) return;
         
         // Для нецентральных вершин - позиционируем по кругу
-        if (!vertex.isCenter) {
+        if (vertex.isCenter) {
+            // Центральная вершина всегда фиксируется в центре мира.
+            vertex.x = this.worldCenter.x;
+            vertex.y = this.worldCenter.y;
+        } else {
             const angle = Math.random() * Math.PI * 2;
             const radius = 300 + Math.random() * 200;
-            
-            vertex.x = Math.cos(angle) * radius;
-            vertex.y = Math.sin(angle) * radius;
-            
+
+            // Разбрасываем вершины вокруг центральной точки (mind-map).
+            const rawX = this.worldCenter.x + Math.cos(angle) * radius;
+            const rawY = this.worldCenter.y + Math.sin(angle) * radius;
+
             // Привязка к сетке
-            const snapped = this.snapToGrid(vertex.x, vertex.y);
+            const snapped = this.snapToGrid(rawX, rawY);
             vertex.x = snapped.x;
             vertex.y = snapped.y;
         }
@@ -416,9 +452,8 @@ class InfiniteCanvas {
             angle = Math.random() * Math.PI * 2;
         }
         
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
-        
+        const x = this.worldCenter.x + Math.cos(angle) * radius;
+        const y = this.worldCenter.y + Math.sin(angle) * radius;
         return this.snapToGrid(x, y);
     }
     
@@ -426,7 +461,9 @@ class InfiniteCanvas {
      * Получает центральную вершину
      */
     getCenterVertex() {
-        return this.centerVertex;
+        // Центр хранится в GraphManager как Event(isCenter).
+        // Здесь оставляем метод для совместимости: возвращаем координаты центра мира.
+        return { x: this.worldCenter.x, y: this.worldCenter.y };
     }
     
     /**
