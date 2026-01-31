@@ -30,6 +30,10 @@
             button.reject  { background:#ffecec; border-color:#f1b8b8; }
             .stat { display:flex; justify-content:space-between; padding: 10px; border:1px solid #eee; border-radius: 12px; margin-bottom: 10px; }
             .leader-row { display:flex; justify-content:space-between; padding: 8px 10px; border-bottom:1px solid #f0f0f0; }
+            .primary {
+            background: #2563eb;
+            color: white;
+        }
         </style>
     </head>
 
@@ -37,7 +41,9 @@
         <header>
             <strong>👥 Student Council Dashboard</strong>
             <span id="pending-count" style="opacity:.7;"></span>
-            <button id="reset-demo" title="Очистить очередь и баллы">Reset demo</button>
+            <a href = "calendar.html">
+                <button class = "primary">Календарь занятости</button>
+            </a>
         </header>
 
         <main>

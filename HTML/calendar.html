@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Календарь занятости</title>
+    <link rel="stylesheet" href="..//CSS/calendar.css">
+</head>
+<body>
+
+<header>
+    <h1>Календарь занятости помещений</h1>
+</header>
+
+<main>
+    <div class="calendar-container">
+        <div id="calendar"></div>
+    </div>
+
+    <div class="schedule-container hide" id="schedule-container">
+        <h2 id="selected-date"></h2>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Актовый зал</th>
+                    <th>Спортзал</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body"></tbody>
+        </table>
+
+        <div class="add-booking hide" id="add-booking">
+            <h3>Добавить занятость</h3>
+            <label>
+                Время:
+                <input type="time" id="booking-time">
+            </label>
+            <label>
+                Помещение:
+                <select id="booking-room">
+                    <option value="Актовый зал">Актовый зал</option>
+                    <option value="Спортзал">Спортзал</option>
+                </select>
+            </label>
+            <label>
+                Назначение:
+                <input type="text" id="booking-purpose" placeholder="Например, репетиция">
+            </label>
+            <button id="save-booking">Сохранить</button>
+        </div>
+
+        <button id="close-schedule">Закрыть</button>
+    </div>
+</main>
+
+<script src="../JS/calendar.js"></script>
+</body>
+</html>

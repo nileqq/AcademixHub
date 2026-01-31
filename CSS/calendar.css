@@ -1,0 +1,102 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f3f4f6;
+}
+
+header {
+    background: #1f2937;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+}
+
+.calendar-container {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 50px);
+    grid-gap: 5px;
+}
+
+.day {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 6px;
+    background: white;
+}
+
+.day.past {
+    background: #d1d5db;
+    cursor: default;
+}
+
+.day.today {
+    border: 2px solid #2563eb;
+}
+
+.schedule-container {
+    padding: 20px;
+}
+
+.schedule-container.hide {
+    display: none;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.schedule-table th,
+.schedule-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+}
+
+.add-booking {
+    margin-bottom: 20px;
+}
+
+.add-booking label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.add-booking input,
+.add-booking select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+}
+
+button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#save-booking {
+    background: #2563eb;
+    color: white;
+}
+
+#close-schedule {
+    background: #e5e7eb;
+}
