@@ -1,7 +1,23 @@
-{
-    "users": {
-        "name": "Kuanyshev Nurislam",
-        "password": "xxx",
-        "role": "student"
-    }
-}
+[
+  {
+    "iin": "01",
+    "name": "Айдана",
+    "surname": "Серикова",
+    "grade": "10A",
+    "role": "Ученик"
+  },
+  {
+    "iin": "02",
+    "name": "Алихан",
+    "surname": "Нурбаев",
+    "grade": "11B",
+    "role": "Сотрудник СК"
+  },
+  {
+    "iin": "03",
+    "name": "Диас",
+    "surname": "Канатов",
+    "grade": "9C",
+    "role": "Лидер шанырака"
+  }
+]

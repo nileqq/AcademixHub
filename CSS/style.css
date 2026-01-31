@@ -1,0 +1,81 @@
+body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+
+        header {
+            background: #1f2937;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        header button {
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        header button:hover {
+            background: #4b5563;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 80px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .container h1 {
+            margin-bottom: 10px;
+        }
+
+        .container p {
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .container button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .secondary {
+            background: #e5e7eb;
+        }
+
+        .profile {
+            text-align: left;
+        }
+
+        .profile div {
+            margin-bottom: 10px;
+        }
+        
+        #loginIin {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        #portfoliobutton {
+            margin-top: 15px;
+        }
