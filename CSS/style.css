@@ -1,7 +1,10 @@
-body {
+body {  
             margin: 0;
             font-family: Arial, sans-serif;
             background: #f4f6f8;
+            background: url('../assets/WhatsApp\ Image\ 2026-01-31\ at\ 22.21.08.jpeg') no-repeat -30px 30px;
+            background-size: 75% auto ;  /* масштабируем на весь экран */
+            background-position: center 90px; /* центрируем по горизонтали, сдвигаем вниз */
         }
 
         header {
