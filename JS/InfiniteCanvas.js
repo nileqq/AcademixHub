@@ -81,6 +81,7 @@ class InfiniteCanvas {
 
         this.setupNavigation();
         
+        
         console.log('✅ InfiniteCanvas полностью инициализирован');
     }
     
@@ -156,7 +157,7 @@ class InfiniteCanvas {
             contacts: '',
             budget: 0,
             date: '',
-            participants: 1
+            participants: 1 
         };
         
         this.events.push(this.centerVertex);
@@ -377,8 +378,8 @@ class InfiniteCanvas {
         // Для нецентральных вершин - позиционируем по кругу
         if (vertex.isCenter) {
             // Центральная вершина всегда фиксируется в центре мира.
-            vertex.x = this.worldCenter.x;
-            vertex.y = this.worldCenter.y;
+            vertex.x = this.worldCenter.x - 40;
+            vertex.y = this.worldCenter.y - 40;
         } else {
             const angle = Math.random() * Math.PI * 2;
             const radius = 300 + Math.random() * 200;

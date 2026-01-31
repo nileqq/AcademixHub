@@ -1,5 +1,7 @@
 {
     "users": {
-        
+        "name": "Kuanyshev Nurislam",
+        "password": "xxx",
+        "role": "student"
     }
 }

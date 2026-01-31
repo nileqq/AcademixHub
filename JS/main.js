@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Инициализируем менеджер графа
             graphManager = new GraphManager('graph-box');
             console.log('✅ GraphManager создан');
+            graphManager.container = infiniteCanvas.canvas;
+            graphManager.initContainer();
             
             setupCanvasIntegration(infiniteCanvas, graphManager);
             ensureCenterVertex(infiniteCanvas, graphManager);
@@ -154,6 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Событие выбора мероприятия
         document.addEventListener('eventSelected', handleEventSelected);
+
+        // Шаныраки
+        document.getElementById('open-shanyrak')?.addEventListener('click', showShanyrakOverlay);
+        document.getElementById('close-shanyrak')?.addEventListener('click', hideShanyrakOverlay);
     }
     
     function showAddEventForm() {
@@ -578,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // # ---- Раскоментируй для теста ---- #
     function loadFromLocalStorage() {
         // Загружаем тестовые данные если нет пользователя
         if (!currentUser) {
@@ -643,5 +650,78 @@ document.addEventListener('DOMContentLoaded', () => {
                 graphManager.addEvent(eventData);
             }, 100);
         });
+    }
+
+    function getShanyrakState() {
+        // Пока мок: все 0. Потом сюда подключишь реальную систему.
+        // Можешь расширить список до 10-12 для эффекта.
+        const shanyraks = [
+            { id: 'S1', name: 'Каспий', points: 0 },
+            { id: 'S2', name: 'Окжетпес', points: 0 },
+            { id: 'S3', name: 'Самрук', points: 0 },
+            { id: 'S4', name: 'Барыс', points: 0 },
+            { id: 'S5', name: 'Қыран', points: 0 },
+            { id: 'S6', name: 'Алтын', points: 0 }
+        ];
+
+        // кто “ваш” шанырак: пока фиксируем первый, потом заменишь на currentUser.shanyrakId
+        const myShanyrakId = 'S1';
+
+        return { shanyraks, myShanyrakId };
+    }
+
+    function showShanyrakOverlay() {
+        const overlay = document.getElementById('shanyrak-overlay');
+        if (!overlay) return;
+
+        overlay.classList.remove('hide');
+        overlay.style.display = 'flex';
+        renderShanyrakLeaderboard();
+    }
+
+    function hideShanyrakOverlay() {
+        const overlay = document.getElementById('shanyrak-overlay');
+        if (!overlay) return;
+
+        overlay.classList.add('hide');
+        overlay.style.display = 'none';
+    }
+
+    function renderShanyrakLeaderboard() {
+        const board = document.getElementById('shanyrak-board');
+        if (!board) return;
+
+        const { shanyraks, myShanyrakId } = getShanyrakState();
+
+        // сортировка по убыванию баллов, затем по имени (чтобы стабильно)
+        const sorted = [...shanyraks].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.name.localeCompare(b.name, 'ru');
+        });
+
+        // рендер списка
+        board.innerHTML = '';
+        sorted.forEach((s, idx) => {
+            const rank = idx + 1;
+            const row = document.createElement('div');
+            row.className = `shanyrak-item ${rank <= 3 ? `rank-${rank}` : ''}`;
+
+            row.innerHTML = `
+                <div class="shanyrak-rank">#${rank}</div>
+                <div class="shanyrak-name">${s.name}</div>
+                <div class="shanyrak-points">${s.points}</div>
+            `;
+
+            board.appendChild(row);
+        });
+
+        // “моё место”
+        const my = sorted.findIndex(s => s.id === myShanyrakId);
+        const myRank = my >= 0 ? my + 1 : null;
+        const mySh = myRank ? sorted[my] : null;
+
+        document.getElementById('my-shanyrak-name').textContent = mySh ? mySh.name : '—';
+        document.getElementById('my-shanyrak-rank').textContent = myRank ? `Место: #${myRank}` : 'Место: —';
+        document.getElementById('my-shanyrak-points').textContent = mySh ? String(mySh.points) : '0';
     }
 });

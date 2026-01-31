@@ -21,8 +21,14 @@
                 </label>
             </div>
 
-            <div class="wrapper">
-                <div class="round" id="open-auth">👤</div>
+            <div class="row row-between">
+                <nav class="navbar">
+                    <div class="btn in-box nav-component" id="open-shanyrak">Шаныраки</div>
+                </nav>
+
+                <div class="wrapper">
+                    <div class="round" id="open-auth">👤</div>
+                </div>
             </div>
         </div>
 
@@ -91,9 +97,9 @@
             <p><strong>Контакты:</strong> <span id="info-contacts"></span></p>
             
             <div class="line in-box"></div>
-            <p><strong>Бюджет:</strong> <span id="info-budget"></span> KZT</p>
+            <p><strong>Бюджет:</strong> <span id="info-budget"></span></p>
             <p><strong>Дата:</strong> <span id="info-date"></span></p>
-            <p><strong>Участники:</strong> <span id="info-participants"></span> чел.</p>
+            <p><strong>Участники:</strong> <span id="info-participants"></span></p>
             <p><strong>Схожесть с центром:</strong> <span id="info-similarity"></span></p>
             
             <div class="line in-box"></div>
@@ -176,12 +182,77 @@
         </div>
     </div>
 
+    <!-- # ---- Оверлей авторизации ---- # -->
+    <div class="overlay hide" id="auth-overlay">
+        <div class="card auth-card">
+            <div class="row row-between">
+                <h3 id="auth-title"><span>Войти</span></h3>
+                <button class="btn in-box" id="close-auth">✕</button>
+            </div>
+
+
+            <div id="login-form">
+                <input type="text" id="login-username" placeholder="Логин">
+                <input type="password" id="login-password" placeholder="Пароль">
+                <div class="wrapper in-box">
+                    <button class="btn in-box" id="login-btn">Войти</button>
+                </div>
+            </div>
+
+            <div class="hide" id="register-form">
+                <input type="text" id="reg-username" placeholder="Логин">
+                <input type="password" id="reg-password" placeholder="Пароль">
+                <select title="reg-role" id="reg-role">
+                    <option value="student">student</option>
+                    <option value="sc">student council</option>
+                    <option value="admin">admin</option>
+                </select>
+                <div class="wrapper in-box">
+                    <button class="btn in-box" id="register-btn">Зарегистрироваться</button>
+                </div>
+            </div> 
+
+            <div class="wrapper in-box row row-end">
+                <button class="btn in-box" id="toggle-auth">→</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- # ---- Оверлей Шаныраков ---- # -->
+    <div class="overlay hide" id="shanyrak-overlay">
+        <div class="card shanyrak-card">
+            <div class="row row-between center" style="width: 100%;">
+            <h3>Шаныраки (лидерборд)</h3>
+            <button class="btn in-box" id="close-shanyrak" style="width: auto; height: auto;">✕</button>
+            </div>
+
+            <div class="line in-box" style="margin: 10px 0;"></div>
+
+            <!-- Твоё место -->
+            <div class="shanyrak-me">
+            <div class="shanyrak-me-title">Ваш шанырак</div>
+            <div class="shanyrak-me-row">
+                <span id="my-shanyrak-name">—</span>
+                <span id="my-shanyrak-rank">Место: —</span>
+                <span id="my-shanyrak-points">0</span>
+            </div>
+            </div>
+
+            <div class="line in-box" style="margin: 10px 0;"></div>
+
+            <!-- Лидерборд -->
+            <div class="shanyrak-board" id="shanyrak-board"></div>
+        </div>
+    </div>
+
+
     <!-- # ---- Подключение JavaScript ---- # -->
     <script src="JS/utils.js"></script>
     <script src="JS/Event.js"></script>
     <script src="JS/SimilarityCalculator.js"></script>
     <script src="JS/GraphManager.js"></script>
     <script src="JS/InfiniteCanvas.js"></script>
+    <script src="JS/server.js"></script>
     <script src="JS/main.js"></script>
 </body>
 </html>

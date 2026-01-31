@@ -7,11 +7,14 @@ class GraphManager {
         this.vertexWidth = 80;
         this.vertexHeight = 80;
         this.selectedEvent = null;
-        // Рёбра (DOM-линии)
         this.connections = [];
         this.connectionMap = new Map(); // key -> { line, e1, e2, type }
         this._connectionsNeedRebuild = true;
         this._rafConnections = null;
+        this._rafDrag = null;
+        this._dirtyDragEvents = new Set();
+        this._activeDragEvent = null;
+        this._activeDragEl = null;
         
         if (!this.container) {
             console.error('Контейнер графа не найден:', containerId);
@@ -166,7 +169,6 @@ class GraphManager {
                 const p = canvas.getCanvasCoordinates(e.clientX, e.clientY);
                 x = p.x - offsetX;
                 y = p.y - offsetY;
-                // Привязка к сетке
                 const snapped = canvas.snapToGrid(x, y);
                 x = snapped.x;
                 y = snapped.y;
@@ -176,20 +178,44 @@ class GraphManager {
                 y = e.clientY - rect.top - offsetY;
             }
 
-            event.moveTo(x, y);
-            this.scheduleConnectionsLayout();
+            // вместо moveTo + scheduleConnectionsLayout
+            event.x = x;
+            event.y = y;
+            this.markDragDirty(event);
         });
         
         document.addEventListener('mouseup', () => {
             isDragging = false;
             element.style.zIndex = '2';
-            
-            // Если позиция изменилась - можно сохранить
-            if (event.x !== startX || event.y !== startY) {
-                // Здесь можно вызвать сохранение
-            }
+
+            this.markDragDirty(event);
         });
     }
+
+    scheduleDragFrame() {
+        if (this._rafDrag) return;
+        this._rafDrag = requestAnimationFrame(() => {
+            this._rafDrag = null;
+
+            // 1) Применяем позицию к DOM-вершинам (в том же кадре)
+            for (const ev of this._dirtyDragEvents) {
+                if (ev.element) {
+                    ev.element.style.left = ev.x + 'px';
+                    ev.element.style.top = ev.y + 'px';
+                }
+            }
+            this._dirtyDragEvents.clear();
+
+            // 2) Рёбра обновляем сразу после (тоже в этом кадре)
+            this.scheduleConnectionsLayout();
+        });
+    }
+
+    markDragDirty(event) {
+        this._dirtyDragEvents.add(event);
+        this.scheduleDragFrame();
+    }
+
 
     /**
      * (Новая версия) Мы больше не удаляем и не пересоздаём рёбра при каждом движении мыши.
@@ -264,6 +290,8 @@ class GraphManager {
 
         const centerVertex = this.events.find(e => e.isCenter);
         const regular = this.events.filter(e => !e.isCenter && e.element && e.element.style.display !== 'none');
+
+        console.log(`Координаты центральной вершины: ${centerVertex.x}, ${centerVertex.y}`);
 
         // Рёбра между обычными вершинами (только если есть причина: общие теги/ошибки)
         for (let i = 0; i < regular.length; i++) {

@@ -75,8 +75,23 @@ ul {
     justify-content: space-between;
 }
 
+.row-end {
+    justify-content: end;
+}
+
 .hide {
     display: none;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.in-box {
+    display: flex;
+    align-items: center;
 }
 
 /* # ---- Стили для инпутов ---- # */

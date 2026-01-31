@@ -1,0 +1,23 @@
+{
+  "name": "academixhub",
+  "version": "1.0.0",
+  "description": "In Link there's a video so you can watch it (How to use the site + walkthrough)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nileqq/AcademixHub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nileqq/AcademixHub/issues"
+  },
+  "homepage": "https://github.com/nileqq/AcademixHub#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
