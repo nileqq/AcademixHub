@@ -45,10 +45,11 @@ class SimilarityCalculator {
                 event,
                 similarity,
                 details: {
-                    tagSimilarity: selectedEvent.calculateTagSimilarity(event),
-                    budgetSimilarity: selectedEvent.calculateBudgetSimilarity(event),
-                    dateSimilarity: selectedEvent.calculateDateSimilarity(event),
-                    participantsSimilarity: selectedEvent.calculateParticipantsSimilarity(event)
+                    tagOverlap: selectedEvent.calculateTagSimilarity(event),
+                    sameType: (selectedEvent.portfolioType && event.portfolioType)
+                        ? (selectedEvent.portfolioType === event.portfolioType ? 1 : 0)
+                        : 0,
+                    dateCloseness: calculateDateSimilarity(selectedEvent.date, event.date)
                 }
             });
         });

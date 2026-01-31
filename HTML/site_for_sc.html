@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>9Engineers - </title>
+
+        <style>
+            body { margin: 0; font-family: system-ui, Arial; }
+            header { padding: 14px 16px; border-bottom: 1px solid #ddd; display:flex; gap:12px; align-items:center; }
+            main { display: grid; grid-template-columns: 1fr 360px; height: calc(100vh - 53px); }
+            .inbox {
+            padding: 12px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-right: 1px solid #eee;
+            }
+            .panel { padding: 12px; overflow-y:auto; overflow-x:hidden; }
+            .card {
+            border: 1px solid #e5e5e5; border-radius: 12px;
+            padding: 12px; margin-bottom: 10px;
+            background: #fff;
+            }
+            .meta { font-size: 12px; opacity: .75; display:flex; gap:10px; flex-wrap:wrap; }
+            .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+            .tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; border:1px solid #ddd; }
+            .actions { margin-top: 10px; display:flex; gap:8px; }
+            button { padding: 8px 10px; border-radius: 10px; border:1px solid #ccc; background:#f7f7f7; cursor:pointer; }
+            button.approve { background:#eaffea; border-color:#bfe6bf; }
+            button.reject  { background:#ffecec; border-color:#f1b8b8; }
+            .stat { display:flex; justify-content:space-between; padding: 10px; border:1px solid #eee; border-radius: 12px; margin-bottom: 10px; }
+            .leader-row { display:flex; justify-content:space-between; padding: 8px 10px; border-bottom:1px solid #f0f0f0; }
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <strong>👥 Student Council Dashboard</strong>
+            <span id="pending-count" style="opacity:.7;"></span>
+            <button id="reset-demo" title="Очистить очередь и баллы">Reset demo</button>
+        </header>
+
+        <main>
+            <section class="inbox">
+            <h3 style="margin:8px 0 12px;">🧾 Новые заявки (pending)</h3>
+            <div id="pending-list"></div>
+            </section>
+
+            <aside class="panel">
+            <h3 style="margin:8px 0 12px;">🏆 Шаныраки: баллы</h3>
+            <div id="shanyrak-board"></div>
+            <div style="height:12px;"></div>
+            <h3 style="margin:8px 0 12px;">📌 Логи</h3>
+            <div id="logs"></div>
+            </aside>
+        </main>
+
+        <script src="../JS/site_for_sc.js"></script>
+    </body> 
+</html>

@@ -1,0 +1,242 @@
+<!-- # ---- Окно портфолио ---- # -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIS Map - Портфолио</title>
+    <link rel="stylesheet" href="../CSS/main.css">
+    <link rel="stylesheet" href="../CSS/components-header.css">
+    <link rel="stylesheet" href="../CSS/components-main.css">
+    <link rel="stylesheet" href="../CSS/components-recommendations.css">
+</head>
+<body>
+    <header>
+        <input type="checkbox" id="toggle-sidebar" hidden>
+        <div class="container row row-between">
+            <div class="wrapper">
+                <label for="toggle-sidebar" class="btn">
+                    <div class="line"></div>
+                    <div class="line"></div>
+                    <div class="line"></div>
+                </label>
+            </div>
+
+            <div class="row row-between">
+
+                <div class="wrapper">
+                    <div class="round" id="open-auth">👤</div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="sidebar">
+            <div class="wrapper">
+                <div class="add-new-project" id="open-card">+</div>
+            </div>
+
+            <div class="line in-box"></div>
+
+            <div class="wrapper">
+                <nav class="navbar">
+                    <ul>
+                        <!-- Поиск по навыку/тегу -->
+                        <li>
+                            <input type="text in-box" id="tag-filter" placeholder="Навык/тег (#python, лидерство)">
+                        </li>
+
+                        <!-- Тип записи -->
+                        <li style="margin-bottom: 8px;">
+                            <select title="type-filter" id="type-filter">
+                                <option value="">Все типы</option>
+                                <option value="project">Проект</option>
+                                <option value="olympiad">Олимпиада</option>
+                                <option value="volunteering">Волонтёрство</option>
+                                <option value="certificate">Сертификат/курс</option>
+                                <option value="achievement">Достижение</option>
+                                <option value="other">Другое</option>
+                            </select>
+                        </li>
+
+                        <!-- Период (с/по) -->
+                        <li>
+                            <input class="btn in-box" type="date" id="date-from-filter" title="Дата с">
+                        </li>
+                        <li>
+                            <input class="btn in-box" type="date" id="date-to-filter" title="Дата по">
+                        </li>
+
+                        <!-- Только записи с ошибками -->
+                        <li class="row" style="gap:8px; align-items:center;">
+                            <input type="checkbox" id="only-with-errors">
+                            <label for="only-with-errors">Только с ошибками</label>
+                        </li>
+
+                        <li>
+                            <button class="btn in-box" id="clear-filters">Сбросить фильтры</button>
+                        </li>
+
+                        <li>
+                            <button class="btn in-box" id="show-recommendations">Рекомендации</button>
+                        </li>
+                        <li>
+                            <button class="btn in-box" id="show-development">Мои направления</button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </header>
+
+    <main>
+        <!-- Бесконечная сетка -->
+        <div class="infinite-canvas-container">
+            <div class="infinite-canvas" id="graph-box"></div>
+            
+            <!-- Индикаторы положения -->
+            <div class="position-indicator">
+                <span id="position-x">X: 0</span>
+                <span id="position-y">Y: 0</span>
+                <span id="zoom-level">100%</span>
+            </div>
+            
+            <!-- Кнопки навигации -->
+            <div class="navigation-controls">
+                <button class="nav-btn" id="center-view">🏠</button>
+                <button class="nav-btn" id="zoom-in">+</button>
+                <button class="nav-btn" id="zoom-out">-</button>
+                <button class="nav-btn" id="reset-zoom">100%</button>
+            </div>
+        </div>
+        
+        <!-- # ---- Сайдбар с информацией о событии ---- # -->
+        <div id="info-sidebar" class="info-sidebar">
+            <h3 id="info-title">Название</h3>
+
+            <p><strong>Описание:</strong> <span id="info-description">—</span></p>
+            <p><strong>Тип:</strong> <span id="info-type">—</span></p>
+
+            <div class="line in-box"></div>
+
+            <p><strong>Навыки:</strong> <span id="info-tags">—</span></p>
+            <p><strong>Ошибки (опционально):</strong> <span id="info-errors">—</span></p>
+            <p><strong>Результат:</strong> <span id="info-result">—</span></p>
+            <p><strong>Дата:</strong> <span id="info-date">—</span></p>
+            <p><strong>Рефлексия:</strong> <span id="info-reflection">—</span></p>
+
+            <div class="line in-box"></div>
+
+            <div class="wrapper in-box">
+                <button class="btn in-box" id="edit-vertex">Редактировать</button>
+                <button class="btn in-box" id="delete-vertex">Удалить</button>
+            </div>
+
+            <div class="wrapper in-box">
+                <button class="btn in-box" id="close-info">Закрыть</button>
+            </div>
+        </div>
+
+
+        <!-- # ---- Сайдбар с рекомендациями ---- # -->
+        <div id="recommendations-sidebar" class="recommendations-sidebar">
+            <h3>Рекомендации</h3>
+            <div id="recommendations-list"></div>
+            <div class="wrapper in-box">
+                <button class="btn in-box close" id="close-recommendations">Закрыть</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- # ---- Оверлей для добавления вершин ---- # -->
+    <div class="card-overlay" id="card-overlay">
+        <div class="card">
+            <h2>Добавить запись в портфолио</h2>
+
+            <label>Название:
+                <input type="text" id="vertex-title">
+            </label>
+
+            <label>Описание (1–2 предложения):
+                <input type="text" id="vertex-description">
+            </label>
+
+            <label>Тип записи:
+                <select id="vertex-type">
+                <option value="project">Проект</option>
+                <option value="olympiad">Олимпиада</option>
+                <option value="volunteering">Волонтёрство</option>
+                <option value="certificate">Сертификат/курс</option>
+                <option value="achievement">Достижение</option>
+                <option value="other">Другое</option>
+                </select>
+            </label>
+
+            <label>Навыки/теги (# через запятую):
+                <input type="text" id="vertex-tags" placeholder="#лидерство,#python,#дебаты">
+            </label>
+
+            <label>Ошибки (опционально, # через запятую):
+                <input type="text" id="vertex-errors" placeholder="#сроки,#коммуникация">
+            </label>
+
+            <label>Результат (место/итог):
+                <input type="text" id="vertex-result" placeholder="Напр.: 2 место / сертификат / выступил">
+            </label>
+
+            <label>Дата:
+                <input type="date" id="vertex-date">
+            </label>
+
+            <label>Рефлексия (чему научился):
+                <input type="text" id="vertex-reflection" placeholder="Напр.: научился презентовать и делегировать">
+            </label>
+
+            <div class="wrapper in-box">
+                <button class="btn in-box create" id="create-vertex">Создать</button>
+                <button class="btn in-box close" id="close-card">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- # ---- Оверлей для редактирования вершин ---- # -->
+    <div id="edit-overlay" class="overlay">
+        <div class="card">
+            <h3 id="edit-card-title">Редактировать запись</h3>
+
+            <input type="text" id="edit-vertex-title" placeholder="Название">
+            <input type="text" id="edit-vertex-description" placeholder="Описание">
+
+            <select id="edit-vertex-type" title="Тип записи">
+                <option value="project">Проект</option>
+                <option value="olympiad">Олимпиада</option>
+                <option value="volunteering">Волонтёрство</option>
+                <option value="certificate">Сертификат/курс</option>
+                <option value="achievement">Достижение</option>
+                <option value="other">Другое</option>
+            </select>
+
+            <input type="text" id="edit-vertex-tags" placeholder="Навыки/теги (через запятую)">
+            <input type="text" id="edit-vertex-errors" placeholder="Ошибки (опционально, через запятую)">
+            <input type="text" id="edit-vertex-result" placeholder="Результат">
+
+            <input type="date" id="edit-vertex-date" placeholder="Дата">
+            <input type="text" id="edit-vertex-reflection" placeholder="Рефлексия">
+
+            <div class="wrapper in-box">
+                <button class="btn in-box save" id="save-vertex">Сохранить</button>
+                <button class="btn in-box close" id="close-edit">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- # ---- Подключение JavaScript ---- # -->
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/Event.js"></script>
+    <script src="../JS/SimilarityCalculator.js"></script>
+    <script src="../JS/GraphManager.js"></script>
+    <script src="../JS/InfiniteCanvas.js"></script>
+    <script src="../JS/main.js"></script>
+</body>
+</html>

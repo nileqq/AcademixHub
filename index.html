@@ -3,253 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNA Engine - Карта развития</title>
-    <link rel="stylesheet" href="CSS/main.css">
-    <link rel="stylesheet" href="CSS/components-header.css">
-    <link rel="stylesheet" href="CSS/components-main.css">
-    <link rel="stylesheet" href="CSS/components-recommendations.css">
+    <title>NIS Map - Profile</title>
+    <link rel="stylesheet" href="CSS/style.css">
 </head>
-<body>
-    <header>
-        <input type="checkbox" id="toggle-sidebar" hidden>
-        <div class="container row row-between">
-            <div class="wrapper">
-                <label for="toggle-sidebar" class="btn">
-                    <div class="line"></div>
-                    <div class="line"></div>
-                    <div class="line"></div>
-                </label>
+    <body>
+        <header>
+            <a href="HTML/shanyraq_leaderboards.html">
+                <button>Рейтинг Шаныраков</button>
+            </a>
+            <a href="HTML/site_for_shanyraq.html">
+                <button id="shanyrButton"  style="display:none;">
+                    Для лидеров Шанырака
+                </button>
+            </a>
+            <a href="HTML/site_for_sc.html">
+                <button id="scButton"  style="display:none;">
+                    Для членов Студ. Совета
+                </button>
+            </a>
+        </header>
+
+        <main>
+            <div class="container" id="home">
+                <h1>Добро пожаловать</h1>
+                <input id="loginIin" placeholder="Введите ИИН">
+                <button class="primary" onclick="login()">Вход</button>
+                <button class="secondary" onclick="openRegister()">Регистрация</button>
             </div>
 
-            <div class="row row-between">
+            <div class="container" id="register" style="display:none;">
+                <h1>Регистрация</h1>
+                <input id="regIin" placeholder="ИИН">
+                <input id="regName" placeholder="Имя">
+                <input id="regSurname" placeholder="Фамилия">
+                <input id="regGrade" placeholder="Класс">
 
-                <div class="wrapper">
-                    <div class="round" id="open-auth">👤</div>
-                </div>
-            </div>
-        </div>
-
-        <aside class="sidebar">
-            <div class="wrapper">
-                <div class="add-new-project" id="open-card">
-                    +
-                </div>
-            </div>
-
-            <div class="line in-box"></div>
-
-            <div class="wrapper">
-                <nav class="navbar">
-                    <ul>
-                        <li>
-                            <input type="text" id="tag-filter" placeholder="Фильтр по тегу (#решение)">
-                        </li>
-                        <li>
-                            <input type="number" id="budget-filter" placeholder="Макс. бюджет (KZT)" min="0">
-                        </li>
-                        <li>
-                            <input type="date" id="date-filter" placeholder="Дата">
-                        </li>
-                        <li>
-                            <input type="number" id="participants-filter" placeholder="Участников от" min="1">
-                        </li>
-                        <li>
-                            <button class="btn in-box" id="show-recommendations">Рекомендации</button>
-                        </li>
-                        <li>
-                            <button class="btn in-box" id="show-development">Мои направления</button>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </aside>
-    </header>
-
-    <main>
-        <!-- Бесконечная сетка -->
-        <div class="infinite-canvas-container">
-            <div class="infinite-canvas" id="graph-box"></div>
-            
-            <!-- Индикаторы положения -->
-            <div class="position-indicator">
-                <span id="position-x">X: 0</span>
-                <span id="position-y">Y: 0</span>
-                <span id="zoom-level">100%</span>
-            </div>
-            
-            <!-- Кнопки навигации -->
-            <div class="navigation-controls">
-                <button class="nav-btn" id="center-view">🏠</button>
-                <button class="nav-btn" id="zoom-in">+</button>
-                <button class="nav-btn" id="zoom-out">-</button>
-                <button class="nav-btn" id="reset-zoom">100%</button>
-            </div>
-        </div>
-        
-        <!-- # ---- Сайдбар с информацией о событии ---- # -->
-        <div id="info-sidebar" class="info-sidebar">
-            <h3 id="info-title">Название</h3>
-            <p><strong>Ключевые решения:</strong> <span id="info-tags"></span></p>
-            <p><strong>Ошибки:</strong> <span id="info-errors"></span></p>
-            <p><strong>Контакты:</strong> <span id="info-contacts"></span></p>
-            
-            <div class="line in-box"></div>
-            <p><strong>Бюджет:</strong> <span id="info-budget"></span></p>
-            <p><strong>Дата:</strong> <span id="info-date"></span></p>
-            <p><strong>Участники:</strong> <span id="info-participants"></span></p>
-            <p><strong>Схожесть с центром:</strong> <span id="info-similarity"></span></p>
-            
-            <div class="line in-box"></div>
-            <div class="wrapper in-box">
-                <button class="btn in-box" id="edit-vertex">Редактировать</button>
-                <button class="btn in-box" id="delete-vertex">Удалить</button>
-            </div>
-
-            <div class="wrapper in-box">
-                <button class="btn in-box" id="close-info">Закрыть</button>
-            </div>
-        </div>
-
-        <!-- # ---- Сайдбар с рекомендациями ---- # -->
-        <div id="recommendations-sidebar" class="recommendations-sidebar">
-            <h3>Рекомендации</h3>
-            <div id="recommendations-list"></div>
-            <div class="wrapper in-box">
-                <button class="btn in-box close" id="close-recommendations">Закрыть</button>
-            </div>
-        </div>
-    </main>
-
-    <!-- # ---- Оверлей для добавления вершин ---- # -->
-    <div class="card-overlay" id="card-overlay">
-        <div class="card">
-            <h2>Добавить направление развития:</h2>
-            <label>Название:
-                <input type="text" id="vertex-title">
-            </label>
-
-            <label>Ключевые решения (# через запятую):
-                <input type="text" id="vertex-tags">
-            </label>
-
-            <label>Ошибки (# через запятую):
-                <input type="text" id="vertex-errors">
-            </label>
-
-            <label>Контакты:
-                <input type="text" id="vertex-contacts">
-            </label>
-
-            <label>Бюджет (KZT):
-                <input type="number" id="vertex-budget" min="0" value="0">
-            </label>
-
-            <label>Дата мероприятия:
-                <input type="date" id="vertex-date">
-            </label>
-
-            <label>Количество участников:
-                <input type="number" id="vertex-participants" min="1" value="1">
-            </label>
-
-            <div class="wrapper in-box">
-                <button class="btn in-box create" id="create-vertex">Создать</button>
-                <button class="btn in-box close" id="close-card">Закрыть</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- # ---- Оверлей для редактирования вершин ---- # -->
-    <div id="edit-overlay" class="overlay">
-        <div class="card">
-            <h3 id="edit-card-title">Редактировать вершину</h3>
-            <input type="text" id="edit-vertex-title" placeholder="Название">
-            <input type="text" id="edit-vertex-tags" placeholder="Ключевые решения (через запятую)">
-            <input type="text" id="edit-vertex-errors" placeholder="Ошибки (через запятую)">
-            <input type="text" id="edit-vertex-contacts" placeholder="Контакты">
-            
-            <input type="number" id="edit-vertex-budget" placeholder="Бюджет (KZT)" min="0">
-            <input type="date" id="edit-vertex-date" placeholder="Дата мероприятия">
-            <input type="number" id="edit-vertex-participants" placeholder="Участники" min="1">
-            
-            <div class="wrapper in-box">
-                <button class="btn in-box save" id="save-vertex">Сохранить</button>
-                <button class="btn in-box close" id="close-edit">Отмена</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- # ---- Оверлей авторизации ---- # 
-    <div class="overlay hide" id="auth-overlay">
-        <div class="card auth-card">
-            <div class="row row-between">
-                <h3 id="auth-title"><span>Войти</span></h3>
-                <button class="btn in-box" id="close-auth">✕</button>
-            </div>
-
-
-            <div id="login-form">
-                <input type="text" id="login-username" placeholder="Логин">
-                <input type="password" id="login-password" placeholder="Пароль">
-                <div class="wrapper in-box">
-                    <button class="btn in-box" id="login-btn">Войти</button>
-                </div>
-            </div>
-
-            <div class="hide" id="register-form">
-                <input type="text" id="reg-username" placeholder="Логин">
-                <input type="password" id="reg-password" placeholder="Пароль">
-                <select title="reg-role" id="reg-role">
-                    <option value="student">student</option>
-                    <option value="sc">student council</option>
-                    <option value="admin">admin</option>
+                <select title="regRole" id="regRole">
+                    <option>Ученик</option>
+                    <option>Сотрудник СК</option>
+                    <option>Лидер шанырака</option>
                 </select>
-                <div class="wrapper in-box">
-                    <button class="btn in-box" id="register-btn">Зарегистрироваться</button>
-                </div>
-            </div> 
 
-            <div class="wrapper in-box row row-end">
-                <button class="btn in-box" id="toggle-auth">→</button>
-            </div>
-        </div>
-    </div> -->
-
-    <!-- # ---- Оверлей Шаныраков
-    <div class="overlay hide" id="shanyrak-overlay">
-        <div class="card shanyrak-card">
-            <div class="row row-between center" style="width: 100%;">
-            <h3>Шаныраки (лидерборд)</h3>
-            <button class="btn in-box" id="close-shanyrak" style="width: auto; height: auto;">✕</button>
+                <button class="" onclick="register()">Зарегистрироваться</button>
+                <button class="secondary" onclick="goHome()">Назад</button>
             </div>
 
-            <div class="line in-box" style="margin: 10px 0;"></div>
+            <div class="container" id="profile"  style="display:none;">
+                <h1>Профиль</h1>
+                <div><strong>ИИН:</strong> <span id="iin"></span></div>
+                <div><strong>Имя:</strong> <span id="name"></span></div>
+                <div><strong>Фамилия:</strong> <span id="surname"></span></div>
+                <div><strong>Класс:</strong> <span id="grade"></span></div>
+                <div><strong>Роль:</strong> <span id="role"></span></div>
 
-             Твоё место 
-            <div class="shanyrak-me">
-            <div class="shanyrak-me-title">Ваш шанырак</div>
-            <div class="shanyrak-me-row">
-                <span id="my-shanyrak-name">—</span>
-                <span id="my-shanyrak-rank">Место: —</span>
-                <span id="my-shanyrak-points">0</span>
+                <a href = "HTML/portfolio.html">
+                    <button class = "primary" id = "portfoliobutton">Портфолио</button>
+                </a>
+                <button class="secondary" onclick="goBack()">Назад</button>
             </div>
-            </div>
 
-            <div class="line in-box" style="margin: 10px 0;"></div>
-
-             Лидерборд 
-            <div class="shanyrak-board" id="shanyrak-board"></div>
-        </div>
-    </div> ---- # -->
-
-
-    <!-- # ---- Подключение JavaScript ---- # -->
-    <script src="JS/utils.js"></script>
-    <script src="JS/Event.js"></script>
-    <script src="JS/SimilarityCalculator.js"></script>
-    <script src="JS/GraphManager.js"></script>
-    <script src="JS/InfiniteCanvas.js"></script>
-    <script src="JS/server.js"></script>
-    <script src="JS/main.js"></script>
-</body>
+            <script src="js/data.js"></script>
+            <script src="js/roles.js"></script>
+            <script src="js/auth.js"></script>
+        </main>
+    
+    </body>
 </html>

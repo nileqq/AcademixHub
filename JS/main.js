@@ -143,9 +143,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Фильтры
         document.getElementById('tag-filter')?.addEventListener('input', applyFilters);
-        document.getElementById('budget-filter')?.addEventListener('change', applyFilters);
-        document.getElementById('date-filter')?.addEventListener('change', applyFilters);
-        document.getElementById('participants-filter')?.addEventListener('change', applyFilters);
+
+        document.getElementById('type-filter')?.addEventListener('change', applyFilters);
+        document.getElementById('date-from-filter')?.addEventListener('change', applyFilters);
+        document.getElementById('date-to-filter')?.addEventListener('change', applyFilters);
+
+        document.getElementById('only-with-errors')?.addEventListener('change', applyFilters);
+
+        document.getElementById('clear-filters')?.addEventListener('click', () => {
+        const tagEl = document.getElementById('tag-filter');
+        const typeEl = document.getElementById('type-filter');
+        const fromEl = document.getElementById('date-from-filter');
+        const toEl = document.getElementById('date-to-filter');
+        const onlyErrEl = document.getElementById('only-with-errors');
+
+        if (tagEl) tagEl.value = '';
+        if (typeEl) typeEl.value = '';
+        if (fromEl) fromEl.value = '';
+        if (toEl) toEl.value = '';
+        if (onlyErrEl) onlyErrEl.checked = false;
+
+        applyFilters();
+        });
+
         
         // Авторизация
         document.getElementById('open-auth')?.addEventListener('click', showAuthForm);
@@ -173,28 +193,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function createEvent() {
         const title = document.getElementById('vertex-title').value.trim();
+        const description = document.getElementById('vertex-description').value.trim();
+        const portfolioType = document.getElementById('vertex-type').value;
         const tags = document.getElementById('vertex-tags').value;
         const errors = document.getElementById('vertex-errors').value;
-        const contacts = document.getElementById('vertex-contacts').value.trim();
-        const budget = document.getElementById('vertex-budget').value;
+        const result = document.getElementById('vertex-result').value.trim();
         const date = document.getElementById('vertex-date').value;
-        const participants = document.getElementById('vertex-participants').value;
-        
+        const reflection = document.getElementById('vertex-reflection').value.trim();
+
         if (isEmpty(title)) {
-            alert('Название мероприятия не может быть пустым!');
+            alert('Название не может быть пустым!');
             return;
         }
-        
+
         const eventData = {
             title,
+            description,
+            portfolioType,
             tags,
             errors,
-            contacts,
-            budget,
+            result,
             date,
-            participants
+            reflection,
+
+            // можно оставить дефолты для совместимости рекомендаций
+            budget: 0,
+            participants: 1,
+            contacts: ''
         };
-        
+
+        const created = graphManager.addEvent(eventData);
+        if (created) {
+        submitToStudentCouncil(created); // ✅ тут логично
+        }
+
+        saveToLocalStorage();
+        hideAddEventForm();
+        clearAddEventForm();
+
         graphManager.addEvent(eventData);
         saveToLocalStorage();
         hideAddEventForm();
@@ -202,13 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function clearAddEventForm() {
-        document.getElementById('vertex-title').value = '';
-        document.getElementById('vertex-tags').value = '';
-        document.getElementById('vertex-errors').value = '';
-        document.getElementById('vertex-contacts').value = '';
-        document.getElementById('vertex-budget').value = '0';
-        document.getElementById('vertex-date').value = '';
-        document.getElementById('vertex-participants').value = '1';
+    document.getElementById('vertex-title').value = '';
+    document.getElementById('vertex-description').value = '';
+    document.getElementById('vertex-type').value = 'project';
+    document.getElementById('vertex-tags').value = '';
+    document.getElementById('vertex-errors').value = '';
+    document.getElementById('vertex-result').value = '';
+    document.getElementById('vertex-date').value = '';
+    document.getElementById('vertex-reflection').value = '';
     }
     
     function handleEventSelected(e) {
@@ -218,52 +255,42 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateEventInfo(event) {
         if (!event) return;
-        
+
         const infoData = event.getInfoData();
-        
+
         document.getElementById('info-title').textContent = infoData.title;
-        document.getElementById('info-tags').textContent = infoData.tags;
-        document.getElementById('info-errors').textContent = infoData.errors;
-        document.getElementById('info-contacts').textContent = infoData.contacts;
-        document.getElementById('info-budget').textContent = infoData.budget;
-        document.getElementById('info-date').textContent = infoData.date;
-        document.getElementById('info-participants').textContent = infoData.participants;
-        
-        // Рассчитываем схожесть с центром
-        if (!event.isCenter) {
-            const similarity = SimilarityCalculator.calculateSimilarityToCenter(event);
-            const similarityClass = getSimilarityClass(similarity);
-            
-            const similarityElement = document.getElementById('info-similarity');
-            similarityElement.textContent = `${similarityClass.label} (${similarity.toFixed(2)})`;
-            similarityElement.className = `similarity-indicator ${similarityClass.className}`;
-        } else {
-            document.getElementById('info-similarity').textContent = 'Центральная точка';
-        }
-        
+        document.getElementById('info-description').textContent = infoData.description || '—';
+        document.getElementById('info-type').textContent = infoData.type || '—';
+        document.getElementById('info-tags').textContent = infoData.tags || '—';
+        document.getElementById('info-errors').textContent = infoData.errors || '—';
+        document.getElementById('info-result').textContent = infoData.result || '—';
+        document.getElementById('info-date').textContent = infoData.date || '—';
+        document.getElementById('info-reflection').textContent = infoData.reflection || '—';
+
         const infoSidebar = document.getElementById('info-sidebar');
         infoSidebar.dataset.vertexId = event.id;
         infoSidebar.classList.add('open');
     }
+
     
     function showEditEventForm() {
-        const infoSidebar = document.getElementById('info-sidebar');
-        const vertexId = infoSidebar.dataset.vertexId;
-        
-        if (!vertexId) return;
-        
-        const event = graphManager.getEventById(vertexId);
-        if (!event) return;
-        
-        document.getElementById('edit-vertex-title').value = event.title;
-        document.getElementById('edit-vertex-tags').value = event.tags.join(', ');
-        document.getElementById('edit-vertex-errors').value = event.errors.join(', ');
-        document.getElementById('edit-vertex-contacts').value = event.contacts;
-        document.getElementById('edit-vertex-budget').value = event.budget;
-        document.getElementById('edit-vertex-date').value = event.date;
-        document.getElementById('edit-vertex-participants').value = event.participants;
-        
-        document.getElementById('edit-overlay').style.display = 'flex';
+    const infoSidebar = document.getElementById('info-sidebar');
+    const vertexId = infoSidebar.dataset.vertexId;
+    if (!vertexId) return;
+
+    const event = graphManager.getEventById(vertexId);
+    if (!event) return;
+
+    document.getElementById('edit-vertex-title').value = event.title;
+    document.getElementById('edit-vertex-description').value = event.description || '';
+    document.getElementById('edit-vertex-type').value = event.portfolioType || 'project';
+    document.getElementById('edit-vertex-tags').value = event.tags.join(', ');
+    document.getElementById('edit-vertex-errors').value = event.errors.join(', ');
+    document.getElementById('edit-vertex-result').value = event.result || '';
+    document.getElementById('edit-vertex-date').value = event.date || '';
+    document.getElementById('edit-vertex-reflection').value = event.reflection || '';
+
+    document.getElementById('edit-overlay').style.display = 'flex';
     }
     
     function hideEditEventForm() {
@@ -273,19 +300,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveEvent() {
         const infoSidebar = document.getElementById('info-sidebar');
         const vertexId = infoSidebar.dataset.vertexId;
-        
         if (!vertexId) return;
-        
+
         const updateData = {
-            title: document.getElementById('edit-vertex-title').value,
+            title: document.getElementById('edit-vertex-title').value.trim(),
+            description: document.getElementById('edit-vertex-description').value.trim(),
+            portfolioType: document.getElementById('edit-vertex-type').value,
             tags: document.getElementById('edit-vertex-tags').value,
             errors: document.getElementById('edit-vertex-errors').value,
-            contacts: document.getElementById('edit-vertex-contacts').value,
-            budget: document.getElementById('edit-vertex-budget').value,
+            result: document.getElementById('edit-vertex-result').value.trim(),
             date: document.getElementById('edit-vertex-date').value,
-            participants: document.getElementById('edit-vertex-participants').value
+            reflection: document.getElementById('edit-vertex-reflection').value.trim()
         };
-        
+
         if (graphManager.updateEvent(vertexId, updateData)) {
             saveToLocalStorage();
             hideEditEventForm();
@@ -313,20 +340,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function applyFilters() {
-        const tagFilter = document.getElementById('tag-filter').value.trim();
-        const budgetFilter = document.getElementById('budget-filter').value;
-        const dateFilter = document.getElementById('date-filter').value;
-        const participantsFilter = document.getElementById('participants-filter').value;
-        
-        const filter = {
-            tag: tagFilter || null,
-            maxBudget: budgetFilter ? parseInt(budgetFilter) : null,
-            date: dateFilter || null,
-            minParticipants: participantsFilter ? parseInt(participantsFilter) : null
-        };
-        
-        graphManager.filterEvents(filter);
+        const tag = document.getElementById('tag-filter')?.value.trim() || '';
+        const type = document.getElementById('type-filter')?.value || '';
+        const dateFrom = document.getElementById('date-from-filter')?.value || '';
+        const dateTo = document.getElementById('date-to-filter')?.value || '';
+        const onlyWithErrors = !!document.getElementById('only-with-errors')?.checked;
+
+        graphManager.filterEvents({
+            tag: tag || null,
+            type: type || null,
+            dateFrom: dateFrom || null,
+            dateTo: dateTo || null,
+            onlyWithErrors
+        });
     }
+
+    function submitToStudentCouncil(event) {
+        const pending = JSON.parse(localStorage.getItem('sc_pending') || '[]');
+
+        const scItem = {
+            scId: `sc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+            eventId: event.id,
+            title: event.title,
+            description: event.description || '',
+            portfolioType: event.portfolioType || 'project',
+            tags: Array.isArray(event.tags) ? event.tags : [],
+            errors: Array.isArray(event.errors) ? event.errors : [],
+            result: event.result || '',
+            date: event.date || '',
+            reflection: event.reflection || '',
+            createdAt: Date.now(),
+            status: 'pending'
+        };
+
+        pending.unshift(scItem); // новые сверху
+        localStorage.setItem('sc_pending', JSON.stringify(pending));
+
+        // (не обязательно) можно сразу пометить вершину в портфолио как pending
+        // чтобы отображать статус внутри записи (если захочешь)
+        event.status = 'pending';
+        if (event.element) event.element.dataset.status = 'pending';
+        }
+
+
     
     function showRecommendations() {
         const selectedEvent = graphManager.getSelectedEvent();
@@ -569,15 +625,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(event => ({
                     id: event.id,
                     title: event.title,
+                    description: event.description,
+                    portfolioType: event.portfolioType,
+                    result: event.result,
+                    reflection: event.reflection,
+
                     tags: event.tags,
                     errors: event.errors,
+
+                    // оставим для совместимости
                     contacts: event.contacts,
                     budget: event.budget,
                     date: event.date,
                     participants: event.participants,
+
                     x: event.x,
                     y: event.y
                 }));
+
             
             users[currentUser].events = eventsData;
             localStorage.setItem('users', JSON.stringify(users));
@@ -618,32 +683,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const sampleEvents = [
             {
                 title: 'Хакатон по AI',
-                tags: '#хакатон,#искуственный_интеллект,#python',
-                errors: '#плохая_документация',
-                contacts: 'org@hackathon.ai',
-                budget: '50000',
+                description: 'Сделал прототип системы рекомендаций.',
+                portfolioType: 'project',
+                tags: '#python,#ai,#команда',
+                errors: '#таймменеджмент',
+                result: 'Топ-5 проектов',
                 date: '2024-03-15',
-                participants: '50'
+                reflection: 'Научился делегировать и презентовать.'
             },
             {
-                title: 'Конференция DevDays',
-                tags: '#конференция,#разработка,#сеть',
-                errors: '#долгий_регистрация',
-                contacts: 'info@devdays.kz',
-                budget: '100000',
+                title: 'Олимпиада по математике',
+                description: 'Участвовал в городском этапе.',
+                portfolioType: 'olympiad',
+                tags: '#математика,#логика',
+                errors: '',
+                result: '2 место',
                 date: '2024-04-20',
-                participants: '200'
-            },
-            {
-                title: 'Воркшоп по React',
-                tags: '#воркшоп,#react,#frontend',
-                errors: '#мало_практики',
-                contacts: 'workshop@react.kz',
-                budget: '25000',
-                date: '2024-02-10',
-                participants: '30'
+                reflection: 'Понял, что надо больше тренировать геометрию.'
             }
         ];
+
         
         sampleEvents.forEach(eventData => {
             setTimeout(() => {

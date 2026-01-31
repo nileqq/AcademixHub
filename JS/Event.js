@@ -3,46 +3,59 @@
 class Event {
     constructor(data) {
         this.id = data.id || Date.now() + Math.random();
-        this.title = data.title || 'Новое мероприятие';
+        this.title = data.title || 'Новая запись';
+
+        // Новые портфолио-поля
+        this.description = data.description || '';
+        this.portfolioType = data.portfolioType || data.type || 'project';
+        this.result = data.result || '';
+        this.reflection = data.reflection || '';
+
+        // Старые поля (оставляем для совместимости/рекомендаций)
         this.tags = Array.isArray(data.tags) ? data.tags : parseTags(data.tags || '');
         this.errors = Array.isArray(data.errors) ? data.errors : parseTags(data.errors || '');
         this.contacts = data.contacts || '';
-        
-        // Метаданные
+
         this.budget = parseInt(data.budget) || 0;
         this.date = data.date || '';
         this.participants = parseInt(data.participants) || 1;
-        
-        // Позиция
+
         this.x = data.x || 0;
         this.y = data.y || 0;
-        
-        // DOM элемент
+
         this.element = null;
-        
-        // Флаги
         this.isCenter = data.isCenter || false;
     }
+
+
+
+
 
     /**
      * Обновляет данные мероприятия
      */
     update(data) {
         if (data.title !== undefined) this.title = data.title;
+
+        // портфолио
+        if (data.description !== undefined) this.description = data.description;
+        if (data.portfolioType !== undefined) this.portfolioType = data.portfolioType;
+        if (data.result !== undefined) this.result = data.result;
+        if (data.reflection !== undefined) this.reflection = data.reflection;
+
+        // совместимость
         if (data.tags !== undefined) {
-            this.tags = Array.isArray(data.tags) ? data.tags : parseTags(data.tags || '');
+        this.tags = Array.isArray(data.tags) ? data.tags : parseTags(data.tags || '');
         }
         if (data.errors !== undefined) {
-            this.errors = Array.isArray(data.errors) ? data.errors : parseTags(data.errors || '');
+        this.errors = Array.isArray(data.errors) ? data.errors : parseTags(data.errors || '');
         }
         if (data.contacts !== undefined) this.contacts = data.contacts;
         if (data.budget !== undefined) this.budget = parseInt(data.budget) || 0;
         if (data.date !== undefined) this.date = data.date;
         if (data.participants !== undefined) this.participants = parseInt(data.participants) || 1;
-        
-        if (this.element) {
-            this.element.textContent = this.title;
-        }
+
+        if (this.element) this.element.textContent = this.title;
     }
 
     /**
@@ -111,13 +124,14 @@ class Event {
      */
     getInfoData() {
         return {
-            title: this.title,
-            tags: this.tags.join(', '),
-            errors: this.errors.join(', '),
-            contacts: this.contacts,
-            budget: `${formatNumber(this.budget)} KZT`,
-            date: formatDate(this.date),
-            participants: `${formatNumber(this.participants)} чел.`
+        title: this.title,
+        description: this.description,
+        type: this.portfolioType,
+        tags: this.tags.join(', '),
+        errors: this.errors.join(', '),
+        result: this.result,
+        date: formatDate(this.date),
+        reflection: this.reflection
         };
     }
 
@@ -125,36 +139,42 @@ class Event {
      * Проверяет, соответствует ли мероприятие фильтру
      */
     matchesFilter(filter) {
-        if (!filter) return true;
-        
-        // Фильтр по тегу
-        if (filter.tag) {
-            const normTag = normalizeTag(filter.tag);
-            if (!this.tags.some(tag => tag.toLowerCase().includes(normTag.toLowerCase()))) {
-                return false;
-            }
+    if (!filter) return true;
+
+    // tag
+    if (filter.tag) {
+        const normTag = normalizeTag(filter.tag);
+        const ok = this.tags.some(t => t.toLowerCase().includes(normTag.toLowerCase()));
+        if (!ok) return false;
+    }
+
+    // type
+    if (filter.type) {
+        if ((this.portfolioType || '') !== filter.type) return false;
+    }
+
+    // onlyWithErrors
+    if (filter.onlyWithErrors) {
+        if (!this.errors || this.errors.length === 0) return false;
+    }
+
+    // date range
+    if (filter.dateFrom || filter.dateTo) {
+        if (!this.date) return false; // если фильтруем по датам — записи без даты скрываем
+        const d = new Date(this.date);
+        if (filter.dateFrom) {
+        const from = new Date(filter.dateFrom);
+        if (d < from) return false;
         }
-        
-        // Фильтр по бюджету
-        if (filter.maxBudget && this.budget > filter.maxBudget) {
-            return false;
+        if (filter.dateTo) {
+        const to = new Date(filter.dateTo);
+        // чтобы включать весь день "to"
+        to.setHours(23, 59, 59, 999);
+        if (d > to) return false;
         }
-        
-        // Фильтр по дате
-        if (filter.date) {
-            const filterDate = new Date(filter.date);
-            const eventDate = new Date(this.date);
-            if (this.date && eventDate < filterDate) {
-                return false;
-            }
-        }
-        
-        // Фильтр по участникам
-        if (filter.minParticipants && this.participants < filter.minParticipants) {
-            return false;
-        }
-        
-        return true;
+    }
+
+    return true;
     }
 
     /**
